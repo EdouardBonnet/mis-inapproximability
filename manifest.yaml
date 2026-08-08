@@ -33,23 +33,3 @@ bibEntries:
       year = {2007},
       doi = {10.4086/toc.2007.v003a006}
     }
-  - |
-    @article{MoserTardos2010,
-      title = {A Constructive Proof of the General Lovász Local Lemma},
-      author = {Moser, Robin A. and Tardos, Gábor},
-      journal = {Journal of the ACM},
-      volume = {57},
-      number = {2},
-      year = {2010},
-      doi = {10.1145/1667053.1667060}
-    }
-  - |
-    @article{HaeuplerSahaSrinivasan2011,
-      title = {New Constructive Aspects of the Lovász Local Lemma},
-      author = {Haeupler, Bernhard and Saha, Barna and Srinivasan, Aravind},
-      journal = {Journal of the ACM},
-      volume = {58},
-      number = {6},
-      year = {2011},
-      doi = {10.1145/2049697.2049702}
-    }

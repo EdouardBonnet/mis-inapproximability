@@ -1,6 +1,7 @@
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Finset.Card
+import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
 
 /-!
 ---
@@ -8,20 +9,28 @@ title: Complexity and approximation definitions for Max Independent Set
 type: definition
 ---
 This concept fixes the computational meaning of the inapproximability
-statement without choosing a machine model.  A computation is accompanied by
+statement without choosing a machine model. A computation is accompanied by
 the number of elementary steps that it takes, and polynomial time means that
-this number is bounded by a fixed polynomial in the input length.  `NP` uses
-polynomially long certificates checked in polynomially many steps.  `BPP`
-uses polynomially many uniformly random bits, polynomially many steps, and
-two-sided error at most one third.
+this number is bounded by a fixed polynomial in the input length. The class
+$NP$ uses polynomially long certificates checked in polynomially many steps.
+The class $BPP$ uses polynomially many uniformly random bits, polynomially
+many steps, and two-sided error at most one third.
 
 A Max Independent Set approximation algorithm similarly supplies its output
-and step count directly.  On every triangle-free `n`-vertex graph it takes
+and step count. On every triangle-free graph with $N$ vertices it takes
 polynomially many steps, returns an independent set, and has size at least the
-optimum divided by `n ^ (1 / 2 - ε)`.
+optimum divided by $N^{1/2-\varepsilon}$.
+
+The general-graph promise-gap solver used to state Håstad--Zuckerman may use a
+bundled probability space. It must run in polynomially many steps and, for all
+sufficiently large $n$, distinguish
+$\alpha(H)\ge n^{1-\delta}$ from $\alpha(H)\le n^\delta$ with error at most
+one third.
 -/
 
 set_option autoImplicit false
+
+open scoped ENNReal
 
 namespace Lax47.Complexity
 
@@ -31,7 +40,7 @@ abbrev BitString := List Bool
 /-- A decision problem over finite binary inputs. -/
 abbrev Language := Set BitString
 
-/-- The polynomial `c (n + 1)^k`, including a harmless offset at size zero. -/
+/-- The polynomial $c(n+1)^k$, including a harmless offset at size zero. -/
 def polynomialBound (c k n : ℕ) : ℕ :=
   c * (n + 1) ^ k
 
@@ -57,11 +66,11 @@ structure NPVerifier (L : Language) where
       certificate.length ≤ polynomialBound certificateConstant certificateExponent x.length ∧
       accepts x certificate = true
 
-/-- A language belongs to `NP` in the abstract step-count model. -/
+/-- A language belongs to $NP$ in the abstract step-count model. -/
 def InNP (L : Language) : Prop :=
   Nonempty (NPVerifier L)
 
-/-- A seed of `r` independent uniformly random bits. -/
+/-- A seed of $r$ independent uniformly random bits. -/
 abbrev RandomSeed (r : ℕ) := Fin r → Bool
 
 /-- A bounded-error randomized decision algorithm with explicit step count. -/
@@ -86,7 +95,7 @@ structure BPPAlgorithm (L : Language) where
     (x ∈ L → 2 * seeds.card ≤ 3 * accepting.card) ∧
       (x ∉ L → 3 * accepting.card ≤ seeds.card)
 
-/-- A language belongs to `BPP` in the abstract step-count model. -/
+/-- A language belongs to $BPP$ in the abstract step-count model. -/
 def InBPP (L : Language) : Prop :=
   Nonempty (BPPAlgorithm L)
 
@@ -94,22 +103,56 @@ def InBPP (L : Language) : Prop :=
 def NPSubsetBPP : Prop :=
   ∀ L : Language, InNP L → InBPP L
 
-/--
-A polynomial-step `n^(1/2-ε)` approximation algorithm for Max Independent Set
-on triangle-free graphs.
--/
+/-- A probability space bundled so that a randomized graph algorithm may choose its sample type. -/
+structure ProbabilitySpace where
+  Sample : Type
+  measurableSpace : MeasurableSpace Sample
+  measure : @MeasureTheory.Measure Sample measurableSpace
+  probability : @MeasureTheory.IsProbabilityMeasure Sample measurableSpace measure
+
+instance (P : ProbabilitySpace) : MeasurableSpace P.Sample :=
+  P.measurableSpace
+
+instance (P : ProbabilitySpace) : MeasureTheory.IsProbabilityMeasure P.measure :=
+  P.probability
+
+/-- A polynomial-step approximation algorithm for triangle-free Max Independent Set. -/
 structure TriangleFreeMISApproximation (ε : ℝ) where
-  output : ∀ (n : ℕ), SimpleGraph (Fin n) → Finset (Fin n)
-  steps : ∀ (n : ℕ), SimpleGraph (Fin n) → ℕ
+  output : ∀ (V : Type) [Fintype V] [DecidableEq V], SimpleGraph V → Finset V
+  steps : ∀ (V : Type) [Fintype V] [DecidableEq V], SimpleGraph V → ℕ
   stepConstant : ℕ
   stepExponent : ℕ
   stepConstant_pos : 0 < stepConstant
-  stepBound : ∀ (n : ℕ) (G : SimpleGraph (Fin n)),
-    steps n G ≤ polynomialBound stepConstant stepExponent n
-  independent : ∀ (n : ℕ) (G : SimpleGraph (Fin n)),
-    G.CliqueFree 3 → G.IsIndepSet (output n G)
-  approximation : ∀ (n : ℕ) (G : SimpleGraph (Fin n)),
+  stepBound : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
+    steps V G ≤ polynomialBound stepConstant stepExponent (Fintype.card V)
+  independent : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
+    G.CliqueFree 3 → G.IsIndepSet (output V G)
+  approximation : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
     G.CliqueFree 3 →
-    (G.indepNum : ℝ) ≤ Real.rpow n ((1 : ℝ) / 2 - ε) * (output n G).card
+    (G.indepNum : ℝ) ≤
+      Real.rpow (Fintype.card V) ((1 : ℝ) / 2 - ε) * (output V G).card
+
+/--
+A bounded-error polynomial-step solver for the Håstad--Zuckerman promise gap.
+Correctness is required only beyond a fixed cutoff, which is equivalent for
+hardness purposes because the finitely many smaller graphs can be handled
+exactly.
+-/
+structure MISGapSolver (δ : ℝ) where
+  sampleSpace : ℕ → ProbabilitySpace
+  accepts : (n : ℕ) → SimpleGraph (Fin n) → (sampleSpace n).Sample → Prop
+  steps : (n : ℕ) → SimpleGraph (Fin n) → (sampleSpace n).Sample → ℕ
+  stepConstant : ℕ
+  stepExponent : ℕ
+  stepConstant_pos : 0 < stepConstant
+  stepBound : ∀ (n : ℕ) (H : SimpleGraph (Fin n)) (sample : (sampleSpace n).Sample),
+    steps n H sample ≤ polynomialBound stepConstant stepExponent n
+  cutoff : ℕ
+  completeness : ∀ (n : ℕ), cutoff ≤ n → ∀ H : SimpleGraph (Fin n),
+    Real.rpow n (1 - δ) ≤ H.indepNum →
+      (2 : ℝ≥0∞) / 3 ≤ (sampleSpace n).measure {sample | accepts n H sample}
+  soundness : ∀ (n : ℕ), cutoff ≤ n → ∀ H : SimpleGraph (Fin n),
+    (H.indepNum : ℝ) ≤ Real.rpow n δ →
+      (sampleSpace n).measure {sample | accepts n H sample} ≤ (1 : ℝ≥0∞) / 3
 
 end Lax47.Complexity

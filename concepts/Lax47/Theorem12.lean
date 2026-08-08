@@ -5,14 +5,13 @@ import Lax47.Complexity
 title: Tight inapproximability of Max Independent Set in triangle-free graphs
 type: theorem
 ---
-For every constant `ε > 0`, there is no polynomial-time
-`N^(1/2-ε)`-approximation algorithm for Max Independent Set on `N`-vertex
-triangle-free graphs unless `NP ⊆ BPP`.
+For every constant $\varepsilon>0$, there is no polynomial-time
+$N^{1/2-\varepsilon}$-approximation algorithm for Max Independent Set on
+$N$-vertex triangle-free graphs unless $NP\subseteq BPP$.
 
 Equivalently, and in the implication form formalized below, the existence of
-such an approximation algorithm implies `NP ⊆ BPP`.  This is the main
-triangle-free inapproximability theorem (Theorem 1 in the supplied proceedings
-version, referred to as Theorem 1.2 in the submission request).
+such an approximation algorithm implies $NP\subseteq BPP$. This is the main
+triangle-free inapproximability theorem, Theorem 1.2 in the submitted paper.
 -/
 
 set_option autoImplicit false
