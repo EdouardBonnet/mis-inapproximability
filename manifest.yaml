@@ -1,0 +1,55 @@
+specVersion: "1"
+id: lax-47
+leanVersion: "v4.30.0"
+mathlibVersion: "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+title: Tight Inapproximability of Max Independent Set in Triangle-Free Graphs
+authors:
+  - name: Édouard Bonnet
+    github: EdouardBonnet
+bibEntries:
+  - |
+    @article{Bonnet2026TriangleFreeMIS,
+      title = {Tight Inapproximability of Max Independent Set in Triangle-Free Graphs},
+      author = {Bonnet, Édouard},
+      year = {2026}
+    }
+  - |
+    @inproceedings{Hastad1996Clique,
+      title = {Clique is hard to approximate within $n^{1-\varepsilon}$},
+      author = {Håstad, Johan},
+      booktitle = {37th Annual Symposium on Foundations of Computer Science},
+      pages = {627--636},
+      year = {1996},
+      doi = {10.1109/SFCS.1996.548522}
+    }
+  - |
+    @article{Zuckerman2007LinearDegree,
+      title = {Linear degree extractors and the inapproximability of Max Clique and Chromatic Number},
+      author = {Zuckerman, David},
+      journal = {Theory of Computing},
+      volume = {3},
+      number = {6},
+      pages = {103--128},
+      year = {2007},
+      doi = {10.4086/toc.2007.v003a006}
+    }
+  - |
+    @article{MoserTardos2010,
+      title = {A Constructive Proof of the General Lovász Local Lemma},
+      author = {Moser, Robin A. and Tardos, Gábor},
+      journal = {Journal of the ACM},
+      volume = {57},
+      number = {2},
+      year = {2010},
+      doi = {10.1145/1667053.1667060}
+    }
+  - |
+    @article{HaeuplerSahaSrinivasan2011,
+      title = {New Constructive Aspects of the Lovász Local Lemma},
+      author = {Haeupler, Bernhard and Saha, Barna and Srinivasan, Aravind},
+      journal = {Journal of the ACM},
+      volume = {58},
+      number = {6},
+      year = {2011},
+      doi = {10.1145/2049697.2049702}
+    }

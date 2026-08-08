@@ -1,0 +1,19 @@
+name = "Lax47"
+defaultTargets = ["Lax47"]
+
+[leanOptions]
+autoImplicit = false
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+
+[[require]]
+name = "Lax41"
+git = "https://github.com/EdouardBonnet/moser-tardos"
+rev = "05704ee2deb398d84129c1e2c3a961f29fec0bed"
+subDir = "concepts"
+
+[[lean_lib]]
+name = "Lax47"
