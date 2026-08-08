@@ -21,7 +21,7 @@ and step count. On every triangle-free graph with $N$ vertices it takes
 polynomially many steps, returns an independent set, and has size at least the
 optimum divided by $N^{1/2-\varepsilon}$.
 
-The general-graph promise-gap solver used to state Håstad--Zuckerman may use a
+The general-graph promise-gap solver used to state Håstad's premise may use a
 bundled probability space. It must run in polynomially many steps and, for all
 sufficiently large $n$, distinguish
 $\alpha(H)\ge n^{1-\delta}$ from $\alpha(H)\le n^\delta$ with error at most
@@ -133,7 +133,7 @@ structure TriangleFreeMISApproximation (ε : ℝ) where
       Real.rpow (Fintype.card V) ((1 : ℝ) / 2 - ε) * (output V G).card
 
 /--
-A bounded-error polynomial-step solver for the Håstad--Zuckerman promise gap.
+A bounded-error polynomial-step solver for Håstad's promise gap.
 Correctness is required only beyond a fixed cutoff, which is equivalent for
 hardness purposes because the finitely many smaller graphs can be handled
 exactly.

@@ -1,6 +1,6 @@
 This submission formalizes the main inapproximability theorem of *Tight
 Inapproximability of Max Independent Set in Triangle-Free Graphs*.  Assuming
-the Håstad--Zuckerman promise hardness of Max Independent Set, it proves that,
+Håstad's promise hardness of Max Independent Set, it proves that,
 for every constant $\varepsilon>0$, a polynomial-time
 $N^{1/2-\varepsilon}$-approximation algorithm on $N$-vertex triangle-free
 graphs implies $NP\subseteq BPP$.

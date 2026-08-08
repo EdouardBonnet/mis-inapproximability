@@ -190,7 +190,7 @@ noncomputable def gapAccepts (R : TriangleFreeReduction)
   gapThreshold δ n ≤
     (algorithm.output (BlowupVertex n) (R.output n H table)).card
 
-/-- The reduction and a triangle-free approximation give a general MIS gap solver. -/
+/-- The reduction and a triangle-free approximation give Håstad's general MIS gap solver. -/
 noncomputable def gapSolver (R : TriangleFreeReduction)
     {ε δ : ℝ} (algorithm : TriangleFreeMISApproximation ε)
     (hδ : 0 < δ) (hδε : 2 * δ ≤ ε) : MISGapSolver δ := by

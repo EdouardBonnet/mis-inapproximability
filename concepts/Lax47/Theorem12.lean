@@ -1,17 +1,18 @@
-import Lax47.Complexity
+import Lax47.Hastad
 
 /-!
 ---
-title: Tight inapproximability of Max Independent Set in triangle-free graphs
+title: Håstad hardness implies tight inapproximability in triangle-free graphs
 type: theorem
 ---
-For every constant $\varepsilon>0$, there is no polynomial-time
+Assume Håstad's general-graph inapproximability premise. Then, for every
+constant $\varepsilon>0$, a polynomial-time
 $N^{1/2-\varepsilon}$-approximation algorithm for Max Independent Set on
-$N$-vertex triangle-free graphs unless $NP\subseteq BPP$.
+$N$-vertex triangle-free graphs implies $NP\subseteq BPP$.
 
-Equivalently, and in the implication form formalized below, the existence of
-such an approximation algorithm implies $NP\subseteq BPP$. This is the main
-triangle-free inapproximability theorem, Theorem 1.2 in the submitted paper.
+The entire implication, including the randomized reduction from the Håstad
+promise gap, is the statement formalized below and proved by this submission.
+Its triangle-free conclusion is Theorem 1.2 in the submitted paper.
 -/
 
 set_option autoImplicit false
@@ -20,8 +21,9 @@ namespace Lax47.Theorem12
 
 open Lax47.Complexity
 
-/-- Tight conditional inapproximability of MIS on triangle-free graphs. -/
+/-- Håstad hardness implies tight conditional inapproximability on triangle-free graphs. -/
 axiom theorem_1_2 :
-  ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP
+  Lax47.Hastad.Inapproximability →
+    ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP
 
 end Lax47.Theorem12

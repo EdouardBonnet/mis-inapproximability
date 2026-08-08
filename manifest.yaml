@@ -22,14 +22,3 @@ bibEntries:
       year = {1996},
       doi = {10.1109/SFCS.1996.548522}
     }
-  - |
-    @article{Zuckerman2007LinearDegree,
-      title = {Linear degree extractors and the inapproximability of Max Clique and Chromatic Number},
-      author = {Zuckerman, David},
-      journal = {Theory of Computing},
-      volume = {3},
-      number = {6},
-      pages = {103--128},
-      year = {2007},
-      doi = {10.4086/toc.2007.v003a006}
-    }

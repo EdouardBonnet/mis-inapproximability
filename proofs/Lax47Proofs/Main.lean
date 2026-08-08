@@ -1,4 +1,3 @@
-import Lax47.HastadZuckerman
 import Lax47.Theorem12
 import Lax47Proofs.GapTransfer
 
@@ -12,18 +11,18 @@ open Lax47Proofs.GapTransfer
 /--
 ---
 conclusion: Lax47.Theorem12.theorem_1_2
-assumptions:
-  - Lax47.HastadZuckerman.gap_hardness
 ---
 The polynomial-cutoff randomized blow-up converts a purported
 $N^{1/2-\varepsilon}$ triangle-free approximation into a bounded-error,
-polynomial-step solver for the Håstad--Zuckerman general-graph promise gap.
+polynomial-step solver for Håstad's general-graph promise gap. Applying the
+Håstad premise proves the triangle-free conclusion.
 -/
 theorem theorem_1_2 :
-    ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP := by
-  intro ε hε algorithm
+    Lax47.Hastad.Inapproximability →
+      ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP := by
+  intro hastad ε hε algorithm
   let δ := chosenDelta ε
-  apply Lax47.HastadZuckerman.gap_hardness δ
+  apply hastad δ
   · exact chosenDelta_pos hε
   · exact chosenDelta_lt_half ε
   · exact gapSolver Construction.reduction algorithm
