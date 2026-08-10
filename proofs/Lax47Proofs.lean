@@ -1,3 +1,5 @@
 import Lax47Proofs.Construction
+import Lax47Proofs.FiniteExecution
+import Lax47Proofs.OperationalReduction
 import Lax47Proofs.GapTransfer
 import Lax47Proofs.Main

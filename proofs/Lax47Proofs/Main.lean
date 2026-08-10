@@ -5,7 +5,7 @@ set_option autoImplicit false
 
 namespace Lax47Proofs
 
-open Lax47.Complexity Lax47.Reduction
+open Lax47.Complexity
 open Lax47Proofs.GapTransfer
 
 /--
@@ -21,11 +21,7 @@ theorem theorem_1_2 :
     Lax47.Hastad.Inapproximability →
       ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP := by
   intro hastad ε hε algorithm
-  let δ := chosenDelta ε
-  apply hastad δ
-  · exact chosenDelta_pos hε
-  · exact chosenDelta_lt_half ε
-  · exact gapSolver Construction.reduction algorithm
-      (chosenDelta_pos hε) two_mul_chosenDelta_le
+  obtain ⟨q, hq, hqε⟩ := exists_gap_parameter ε hε
+  exact hastad q hq (gapSolver q algorithm hq hqε)
 
 end Lax47Proofs

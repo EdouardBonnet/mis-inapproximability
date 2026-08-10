@@ -31,31 +31,44 @@ query event for every prospective independent set. -/
 abbrev ReductionEvent (n : ℕ) :=
   VertexTriple n ⊕ Finset (BlowupVertex n)
 
-private def firstVertex {n : ℕ} (t : VertexTriple n) : BlowupVertex n := t.1
-private def secondVertex {n : ℕ} (t : VertexTriple n) : BlowupVertex n := t.2.1
-private def thirdVertex {n : ℕ} (t : VertexTriple n) : BlowupVertex n := t.2.2
-
 /-- The three edge variables on an ordered triple. -/
 def triangleVariables {n : ℕ} (t : VertexTriple n) :
     Finset (EdgeVariable n) := by
   classical
-  exact {s(firstVertex t, secondVertex t),
-    s(firstVertex t, thirdVertex t), s(secondVertex t, thirdVertex t)}
+  exact {s(executionFirstVertex t, executionSecondVertex t),
+    s(executionFirstVertex t, executionThirdVertex t),
+    s(executionSecondVertex t, executionThirdVertex t)}
 
 /-- Whether an ordered triple names a triangle of the complete blow-up. -/
 def IsBlowupTriangle {n : ℕ} (H : SimpleGraph (Fin n))
     (t : VertexTriple n) : Prop :=
-  (blowup H).Adj (firstVertex t) (secondVertex t) ∧
-    (blowup H).Adj (firstVertex t) (thirdVertex t) ∧
-    (blowup H).Adj (secondVertex t) (thirdVertex t)
+  (blowup H).Adj (executionFirstVertex t) (executionSecondVertex t) ∧
+    (blowup H).Adj (executionFirstVertex t) (executionThirdVertex t) ∧
+    (blowup H).Adj (executionSecondVertex t) (executionThirdVertex t)
 
-/-- The triangle events on which Moser--Tardos runs. -/
+/-- The embedding of ordered triangle names into the common event universe. -/
+def triangleEventEmbedding (n : ℕ) : VertexTriple n ↪ ReductionEvent n :=
+  ⟨Sum.inl, Sum.inl_injective⟩
+
+/--
+The triangle events on which Moser--Tardos runs.  This definition filters the
+$n^6$ ordered triples directly; it does not enumerate the exponentially many
+independent-set query events in the other summand.
+-/
 def badEvents {n : ℕ} (H : SimpleGraph (Fin n)) :
     Finset (ReductionEvent n) := by
   classical
-  exact Finset.univ.filter fun A ↦ match A with
-    | Sum.inl t => IsBlowupTriangle H t
-    | Sum.inr _ => False
+  exact (Finset.univ.filter (IsBlowupTriangle H)).map
+    (triangleEventEmbedding n)
+
+lemma badIndex_spec {n : ℕ} {H : SimpleGraph (Fin n)}
+    (A : BadEventIndex (badEvents H)) :
+    ∃ t : VertexTriple n, A.1 = Sum.inl t ∧ IsBlowupTriangle H t := by
+  rcases A with ⟨A, hA⟩
+  simp only [badEvents, Finset.mem_map, Finset.mem_filter, Finset.mem_univ,
+    true_and] at hA
+  obtain ⟨t, ht, rfl⟩ := hA
+  exact ⟨t, rfl, ht⟩
 
 /-- Variables determining either a bad triangle or an independent-set query. -/
 noncomputable def variablesOf {n : ℕ} (H : SimpleGraph (Fin n)) :
@@ -75,17 +88,16 @@ noncomputable def eventSet {n : ℕ} (H : SimpleGraph (Fin n)) :
     | Sum.inl _ => {a | ∀ e, a e = true}
     | Sum.inr _ => {a | ∀ e, a e = false}
 
-/-- On a finite Boolean assignment space, choosing an arbitrary currently true
-event is a measurable resampling rule. -/
-noncomputable def chooseViolation
-    {E I : Type} [Fintype E] [DecidableEq E] [Fintype I] [DecidableEq I]
+/-- Scan the finite event list and choose its first currently true event. -/
+def chooseViolation
+    {E I : Type} [Fintype E] [Fintype I]
     (scope : E → Finset I)
-    (bad : ∀ e, Set (LocalAssignment (fun _ : I ↦ Bool) (scope e))) :
+    (bad : ∀ e, Set (LocalAssignment (fun _ : I ↦ Bool) (scope e)))
+    [∀ assignment e, Decidable (violates (fun _ : I ↦ Bool) scope bad assignment e)] :
     ResamplingRule (fun _ : I ↦ Bool) scope bad := by
-  classical
   let pick (assignment : Assignment (fun _ : I ↦ Bool)) : Option E :=
-    if h : ∃ e, violates (fun _ : I ↦ Bool) scope bad assignment e
-      then some (Classical.choose h) else none
+    Finset.univ.toList.find? fun e ↦
+      decide (violates (fun _ : I ↦ Bool) scope bad assignment e)
   refine
     { choose := pick
       measurable_fiber := fun _ ↦ Set.toFinite _ |>.measurableSet
@@ -93,17 +105,48 @@ noncomputable def chooseViolation
       complete := ?_ }
   · intro assignment A hchoose
     dsimp only [pick] at hchoose
-    split at hchoose
-    next h =>
-      have hA : Classical.choose h = A := Option.some.inj hchoose
-      rw [← hA]
-      exact Classical.choose_spec h
-    next => simp at hchoose
+    have htrue : decide
+        (violates (fun _ : I ↦ Bool) scope bad assignment A) = true :=
+      List.find?_some
+        (p := fun e ↦ decide
+          (violates (fun _ : I ↦ Bool) scope bad assignment e)) hchoose
+    exact of_decide_eq_true htrue
   · intro assignment hchoose
     dsimp only [pick] at hchoose
-    split at hchoose
-    next => simp at hchoose
-    next h => simpa only [not_exists] using h
+    have hnone := List.find?_eq_none.mp hchoose
+    intro A hviolates
+    have hmem : A ∈ (Finset.univ.toList : List E) := by simp
+    exact hnone A hmem (decide_eq_true hviolates)
+
+/-- Scan a supplied complete finite ordering of the bad events. -/
+def chooseViolationFromList
+    {E I : Type} [Fintype E] [Fintype I]
+    (scope : E → Finset I)
+    (bad : ∀ e, Set (LocalAssignment (fun _ : I ↦ Bool) (scope e)))
+    (order : List E) (covers : ∀ e, e ∈ order)
+    [∀ assignment e, Decidable (violates (fun _ : I ↦ Bool) scope bad assignment e)] :
+    ResamplingRule (fun _ : I ↦ Bool) scope bad := by
+  let pick (assignment : Assignment (fun _ : I ↦ Bool)) : Option E :=
+    order.find? fun e ↦
+      decide (violates (fun _ : I ↦ Bool) scope bad assignment e)
+  refine
+    { choose := pick
+      measurable_fiber := fun _ ↦ Set.toFinite _ |>.measurableSet
+      sound := ?_
+      complete := ?_ }
+  · intro assignment A hchoose
+    dsimp only [pick] at hchoose
+    have htrue : decide
+        (violates (fun _ : I ↦ Bool) scope bad assignment A) = true :=
+      List.find?_some
+        (p := fun e ↦ decide
+          (violates (fun _ : I ↦ Bool) scope bad assignment e)) hchoose
+    exact of_decide_eq_true htrue
+  · intro assignment hchoose
+    dsimp only [pick] at hchoose
+    have hnone := List.find?_eq_none.mp hchoose
+    intro A hviolates
+    exact hnone A (covers A) (decide_eq_true hviolates)
 
 /-- Bad-event scopes, in the notation of the HSS theorem. -/
 abbrev badVariables {n : ℕ} (H : SimpleGraph (Fin n)) :=
@@ -114,27 +157,128 @@ abbrev badSet {n : ℕ} (H : SimpleGraph (Fin n)) :=
   badEventSet (fun _ : EdgeVariable n ↦ Bool)
     (badEvents H) (variablesOf H) (eventSet H)
 
+/-- The bad-event index represented by a triple known to be a blow-up triangle. -/
+noncomputable def triangleBadIndex {n : ℕ} (H : SimpleGraph (Fin n))
+    (triple : VertexTriple n) (htriangle : IsBlowupTriangle H triple) :
+    BadEventIndex (badEvents H) :=
+  ⟨Sum.inl triple, by
+    simp [badEvents, triangleEventEmbedding, htriangle]⟩
+
+/-- The candidate returned when one scanned triple is a violated bad event. -/
+noncomputable def triangleCandidate {n : ℕ} (H : SimpleGraph (Fin n))
+    (assignment : EdgeVariable n → Bool) (triple : VertexTriple n) :
+    Option (BadEventIndex (badEvents H)) := by
+  classical
+  exact if htriangle : IsBlowupTriangle H triple then
+    let event := triangleBadIndex H triple htriangle
+    if violates (fun _ : EdgeVariable n ↦ Bool)
+        (badVariables H) (badSet H) assignment event then
+      some event
+    else none
+  else none
+
+/-- Scan an explicit triple list and return its first violated triangle event. -/
+noncomputable def chooseTriangleEvent {n : ℕ} (H : SimpleGraph (Fin n))
+    (assignment : EdgeVariable n → Bool) (order : List (VertexTriple n)) :
+    Option (BadEventIndex (badEvents H)) :=
+  order.findSome? (triangleCandidate H assignment)
+
+lemma chooseTriangleEvent_sound {n : ℕ} (H : SimpleGraph (Fin n))
+    (assignment : EdgeVariable n → Bool) (order : List (VertexTriple n))
+    (A : BadEventIndex (badEvents H))
+    (hchoose : chooseTriangleEvent H assignment order = some A) :
+    violates (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) assignment A := by
+  classical
+  obtain ⟨triple, _hmem, hcandidate⟩ :=
+    List.exists_of_findSome?_eq_some (by
+      simpa only [chooseTriangleEvent] using hchoose)
+  have htriangle : IsBlowupTriangle H triple := by
+    by_contra hnot
+    simp [triangleCandidate, hnot] at hcandidate
+  have hviolates : violates (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) assignment
+      (triangleBadIndex H triple htriangle) := by
+    by_contra hnot
+    simp [triangleCandidate, htriangle, hnot] at hcandidate
+  have hindex : triangleBadIndex H triple htriangle = A := by
+    simpa [triangleCandidate, htriangle, hviolates] using hcandidate
+  rw [← hindex]
+  exact hviolates
+
+lemma chooseTriangleEvent_complete {n : ℕ} (H : SimpleGraph (Fin n))
+    (assignment : EdgeVariable n → Bool)
+    (hchoose : chooseTriangleEvent H assignment (executionTriples n) = none)
+    (A : BadEventIndex (badEvents H)) :
+    ¬violates (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) assignment A := by
+  obtain ⟨triple, hA, htriangle⟩ := badIndex_spec A
+  have hindex : triangleBadIndex H triple htriangle = A := by
+    apply Subtype.ext
+    exact hA.symm
+  rw [← hindex]
+  have hcandidate : triangleCandidate H assignment triple = none :=
+    (List.findSome?_eq_none_iff.mp (by
+      simpa only [chooseTriangleEvent] using hchoose))
+      triple (mem_executionTriples triple)
+  intro hviolates
+  simp [triangleCandidate, htriangle, hviolates] at hcandidate
+
 /-- The fixed deterministic rule used by the reduction. -/
-noncomputable def selectionRule {n : ℕ} (H : SimpleGraph (Fin n)) :
+def selectionRule {n : ℕ} (H : SimpleGraph (Fin n)) :
     ResamplingRule (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) := by
   classical
-  exact chooseViolation (badVariables H) (badSet H)
+  exact
+    { choose := fun assignment ↦
+        chooseTriangleEvent H assignment (executionTriples n)
+      measurable_fiber := fun _ ↦ Set.toFinite _ |>.measurableSet
+      sound := by
+        intro assignment A hchoose
+        exact chooseTriangleEvent_sound H assignment (executionTriples n) A hchoose
+      complete := by
+        intro assignment hchoose A
+        exact chooseTriangleEvent_complete H assignment hchoose A }
 
-/-- Sampling probability $1/(100(n+1))$. The extra slack absorbs the six
-ordered names of every triangle. -/
+/-- Number of uniform bits used for one edge sample. -/
+def sampleBits (n : ℕ) : ℕ :=
+  Nat.log2 (100 * (n + 1)) + 1
+
+/-- The power-of-two denominator of one edge sample. -/
+def edgeDenominator (n : ℕ) : ℕ :=
+  2 ^ sampleBits n
+
+/--
+Dyadic edge probability obtained by requiring all bits in one sample block to
+be true. Its denominator lies between $100(n+1)$ and $200(n+1)$.
+-/
 def edgeChance (n : ℕ) : NNReal :=
-  (100 * ((n + 1 : ℕ) : NNReal))⁻¹
+  ((edgeDenominator n : ℕ) : NNReal)⁻¹
+
+lemma edge_target_le_denominator (n : ℕ) :
+    100 * (n + 1) ≤ edgeDenominator n := by
+  rw [edgeDenominator, sampleBits, Nat.log2_eq_log_two]
+  exact (Nat.lt_pow_succ_log_self (by norm_num) _).le
+
+lemma edge_denominator_le_twice_target (n : ℕ) :
+    edgeDenominator n ≤ 2 * (100 * (n + 1)) := by
+  calc
+    edgeDenominator n = 2 ^ (Nat.log 2 (100 * (n + 1)) + 1) := by
+      rw [edgeDenominator, sampleBits, Nat.log2_eq_log_two]
+    _ = 2 ^ Nat.log 2 (100 * (n + 1)) * 2 := by rw [Nat.pow_succ]
+    _ ≤ (100 * (n + 1)) * 2 :=
+      Nat.mul_le_mul_right 2
+        (Nat.pow_log_le_self 2 (by omega : 100 * (n + 1) ≠ 0))
+    _ = 2 * (100 * (n + 1)) := by omega
+
+lemma edgeDenominator_pos (n : ℕ) : 0 < edgeDenominator n := by
+  unfold edgeDenominator
+  exact pow_pos (by norm_num) _
 
 lemma edgeChance_le_one (n : ℕ) : edgeChance n ≤ 1 := by
   rw [edgeChance, inv_le_one₀]
-  · calc
-      (1 : NNReal) ≤ 100 := by norm_num
-      _ ≤ 100 * ((n + 1 : ℕ) : NNReal) := by
-        have hn : (1 : NNReal) ≤ ((n + 1 : ℕ) : NNReal) := by
-          exact_mod_cast Nat.succ_pos n
-        simpa only [mul_one] using mul_le_mul_left' hn (100 : NNReal)
-  · positivity
+  · exact_mod_cast Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt (edgeDenominator_pos n))
+  · exact_mod_cast edgeDenominator_pos n
 
 /-- Every edge variable is an independent Bernoulli sample. -/
 noncomputable def distribution (n : ℕ) (_ : EdgeVariable n) :
@@ -217,33 +361,27 @@ lemma triangleVariables_card {n : ℕ} {H : SimpleGraph (Fin n)}
   have hac' := (blowup H).ne_of_adj hac
   have hbc' := (blowup H).ne_of_adj hbc
   have eab_ne_eac :
-      s(firstVertex t, secondVertex t) ≠ s(firstVertex t, thirdVertex t) := by
+      s(executionFirstVertex t, executionSecondVertex t) ≠
+        s(executionFirstVertex t, executionThirdVertex t) := by
     intro he
     rcases Sym2.eq_iff.mp he with h | h
     · exact hbc' h.2
     · exact hac' h.1
   have eab_ne_ebc :
-      s(firstVertex t, secondVertex t) ≠ s(secondVertex t, thirdVertex t) := by
+      s(executionFirstVertex t, executionSecondVertex t) ≠
+        s(executionSecondVertex t, executionThirdVertex t) := by
     intro he
     rcases Sym2.eq_iff.mp he with h | h
     · exact hab' h.1
     · exact hac' h.1
   have eac_ne_ebc :
-      s(firstVertex t, thirdVertex t) ≠ s(secondVertex t, thirdVertex t) := by
+      s(executionFirstVertex t, executionThirdVertex t) ≠
+        s(executionSecondVertex t, executionThirdVertex t) := by
     intro he
     rcases Sym2.eq_iff.mp he with h | h
     · exact hab' h.1
     · exact hac' h.1
   simp [triangleVariables, eab_ne_eac, eab_ne_ebc, eac_ne_ebc]
-
-lemma badIndex_spec {n : ℕ} {H : SimpleGraph (Fin n)}
-    (A : BadEventIndex (badEvents H)) :
-    ∃ t : VertexTriple n, A.1 = Sum.inl t ∧ IsBlowupTriangle H t := by
-  rcases A with ⟨A, hA⟩
-  simp only [badEvents, Finset.mem_filter, Finset.mem_univ, true_and] at hA
-  cases A with
-  | inl t => exact ⟨t, rfl, hA⟩
-  | inr S => exact False.elim hA
 
 lemma bad_event_measurable {n : ℕ} (H : SimpleGraph (Fin n)) :
     ∀ A : ReductionEvent n, MeasurableSet (eventSet H A) := by
@@ -298,8 +436,8 @@ lemma mem_triplesWithEdge_of_mem_triangleVariables {n : ℕ}
     t ∈ triplesWithEdge u v := by
   classical
   rcases t with ⟨a, b, c⟩
-  simp_all [triangleVariables, triplesWithEdge, firstVertex, secondVertex,
-    thirdVertex, Sym2.eq_iff]
+  simp_all [triangleVariables, triplesWithEdge, executionFirstVertex,
+    executionSecondVertex, executionThirdVertex, Sym2.eq_iff]
   aesop
 
 lemma card_triplesWithEdge_le {n : ℕ} (u v : BlowupVertex n) :
@@ -472,20 +610,43 @@ lemma query_dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
 /-! ### The local-lemma inequalities -/
 
 lemma edgeChance_pos (n : ℕ) : 0 < edgeChance n := by
-  unfold edgeChance
-  positivity
+  rw [edgeChance]
+  exact inv_pos.mpr (by exact_mod_cast edgeDenominator_pos n)
+
+lemma edgeChance_le_target_inv (n : ℕ) :
+    edgeChance n ≤ (100 * ((n + 1 : ℕ) : NNReal))⁻¹ := by
+  rw [edgeChance]
+  have hden : (0 : NNReal) < edgeDenominator n := by
+    exact_mod_cast edgeDenominator_pos n
+  have htarget : (0 : NNReal) < 100 * ((n + 1 : ℕ) : NNReal) := by
+    positivity
+  apply (inv_le_inv₀ hden htarget).2
+  exact_mod_cast edge_target_le_denominator n
+
+lemma twice_target_inv_le_edgeChance (n : ℕ) :
+    (200 * ((n + 1 : ℕ) : NNReal))⁻¹ ≤ edgeChance n := by
+  rw [edgeChance]
+  have htarget : (0 : NNReal) < 200 * ((n + 1 : ℕ) : NNReal) := by
+    positivity
+  have hden : (0 : NNReal) < edgeDenominator n := by
+    exact_mod_cast edgeDenominator_pos n
+  apply (inv_le_inv₀ htarget hden).2
+  have hnat : edgeDenominator n ≤ 200 * (n + 1) := by
+    have := edge_denominator_le_twice_target n
+    omega
+  exact_mod_cast hnat
 
 lemma edgeChance_le_hundredth (n : ℕ) :
     edgeChance n ≤ (1 / 100 : NNReal) := by
-  unfold edgeChance
-  rw [one_div]
-  rw [inv_le_inv₀ (by positivity) (by norm_num)]
   calc
-    (100 : NNReal) = 100 * 1 := by norm_num
-    _ ≤ 100 * ((n + 1 : ℕ) : NNReal) := by
+    edgeChance n ≤ (100 * ((n + 1 : ℕ) : NNReal))⁻¹ :=
+      edgeChance_le_target_inv n
+    _ ≤ (100 : NNReal)⁻¹ := by
+      apply (inv_le_inv₀ (by norm_num) (by positivity)).2
       have hn : (1 : NNReal) ≤ ((n + 1 : ℕ) : NNReal) := by
         exact_mod_cast Nat.succ_pos n
-      exact mul_le_mul_left' hn 100
+      simpa only [mul_one] using mul_le_mul_left' hn (100 : NNReal)
+    _ = 1 / 100 := by rw [one_div]
 
 lemma charge_pos {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) : 0 < charge H A := by
@@ -508,14 +669,15 @@ lemma charge_mul_dependency_card_le_half {n d : ℕ}
   have hpoly : (n : ℝ) ^ 2 ≤ (n + 1) ^ 3 := by
     nlinarith [sq_nonneg (n : ℝ), mul_nonneg hn (sq_nonneg (n : ℝ))]
   have hden : (0 : ℝ) < (100 * (n + 1)) ^ 3 := by positivity
-  rw [edgeChance]
-  push_cast
-  change (d : ℝ) * (2 * ((100 * ((n : ℝ) + 1))⁻¹) ^ 3) ≤ 1 / 2
-  rw [inv_pow, ← div_eq_mul_inv]
-  rw [show (d : ℝ) * (2 / (100 * ((n : ℝ) + 1)) ^ 3) =
-      ((d : ℝ) * 2) / (100 * ((n : ℝ) + 1)) ^ 3 by ring]
-  rw [div_le_iff₀ hden]
-  nlinarith
+  have hp : (edgeChance n : ℝ) ≤ (100 * (n + 1 : ℝ))⁻¹ := by
+    exact_mod_cast edgeChance_le_target_inv n
+  calc
+    (d : ℝ) * (2 * (edgeChance n : ℝ) ^ 3) ≤
+        (d : ℝ) * (2 * ((100 * (n + 1 : ℝ))⁻¹) ^ 3) := by gcongr
+    _ = ((d : ℝ) * 2) / (100 * (n + 1)) ^ 3 := by field_simp
+    _ ≤ 1 / 2 := by
+      rw [div_le_iff₀ hden]
+      nlinarith
 
 /-- One block of at most $6n^2$ triangle dependencies consumes at most a
 quarter of the raw edge-deletion probability. -/
@@ -526,12 +688,16 @@ lemma query_charge_block_mul_le_quarter (n : ℕ) :
   have hn : (0 : ℝ) ≤ n := by positivity
   rw [edgeChance]
   push_cast
-  change (6 * (n : ℝ) ^ 2) *
-      (2 * ((100 * ((n : ℝ) + 1))⁻¹) ^ 3) ≤
-        (100 * ((n : ℝ) + 1))⁻¹ / 4
-  have hden : (0 : ℝ) < 100 * (n + 1) := by positivity
+  have hdenCast : (100 * (n + 1) : ℝ) ≤ edgeDenominator n := by
+    exact_mod_cast edge_target_le_denominator n
+  have hdenPos : (0 : ℝ) < edgeDenominator n :=
+    lt_of_lt_of_le (by positivity) hdenCast
+  have hsq : 48 * (n : ℝ) ^ 2 ≤ (edgeDenominator n : ℝ) ^ 2 := by
+    have : (100 * ((n : ℝ) + 1)) ^ 2 ≤ (edgeDenominator n : ℝ) ^ 2 := by
+      gcongr
+    nlinarith [sq_nonneg (n : ℝ)]
   field_simp
-  nlinarith [sq_nonneg (n : ℝ)]
+  nlinarith
 
 lemma query_block_survival_lower (n : ℕ) :
     (1 - edgeChance n / 4 : NNReal) ≤
@@ -900,7 +1066,7 @@ lemma violates_badEvent_of_output_triangle {n : ℕ} {H : SimpleGraph (Fin n)}
     exact ⟨(outputGraph_adj_iff.mp hab).1,
       (outputGraph_adj_iff.mp hac).1, (outputGraph_adj_iff.mp hbc).1⟩
   have hmem : Sum.inl t ∈ badEvents H := by
-    simp [badEvents, ht]
+    simp [badEvents, triangleEventEmbedding, ht]
   let A : BadEventIndex (badEvents H) := ⟨Sum.inl t, hmem⟩
   refine ⟨A, ?_⟩
   change ∀ e : triangleVariables t, finalAssignment H table e.1 = true
@@ -1006,7 +1172,7 @@ noncomputable def workEnvelope {n : ℕ} (H : SimpleGraph (Fin n))
     Lax41Proofs.passingTreeCount (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) table A
 
-/-- The Lax41 witness-tree injection bounds the actual number of resamplings. -/
+/-- The imported witness-tree injection bounds the actual number of resamplings. -/
 lemma resamplingSteps_le_workEnvelope {n : ℕ} (H : SimpleGraph (Fin n))
     (table : SampleTable n) :
     resamplingSteps H table ≤ workEnvelope H table := by
@@ -1493,12 +1659,12 @@ lemma queryScope_density {n : ℕ} (H : SimpleGraph (Fin n))
 
 /-- The cardinality at which the union bound is applied. -/
 def soundnessLevel {n : ℕ} (H : SimpleGraph (Fin n)) : ℕ :=
-  3200 * H.indepNum * (n + 1) * (Nat.log2 n + 1)
+  6400 * H.indepNum * (n + 1) * (Nat.log2 n + 1)
 
 /-- The number of $200(n+1)$-step survival blocks forced by edge density at
 the soundness level. -/
 def soundnessBlocks {n : ℕ} (H : SimpleGraph (Fin n)) : ℕ :=
-  12800 * H.indepNum * (n + 1) * (Nat.log2 n + 1) ^ 2
+  25600 * H.indepNum * (n + 1) * (Nat.log2 n + 1) ^ 2
 
 def soundnessFamily {n : ℕ} (H : SimpleGraph (Fin n)) :
     Finset (Finset (BlowupVertex n)) :=
@@ -1515,25 +1681,35 @@ noncomputable def soundnessUnion {n : ℕ} (H : SimpleGraph (Fin n)) :
     Set (SampleTable n) :=
   ⋃ S ∈ soundnessFamily H, soundnessQueryEvent H S
 
-/-- One block of $200(n+1)$ trials has survival probability at most one half. -/
+/-- One block of $400(n+1)$ trials has survival probability at most one half. -/
 lemma survival_block_le_half (n : ℕ) :
-    (1 - edgeChance n / 2 : NNReal) ^ (200 * (n + 1)) ≤ 1 / 2 := by
-  let d : ℕ := 200 * (n + 1)
+    (1 - edgeChance n / 2 : NNReal) ^ (400 * (n + 1)) ≤ 1 / 2 := by
+  let d : ℕ := 400 * (n + 1)
   have hdpos : 0 < d := by simp [d]
+  have hp2 : edgeChance n / 2 ≤ (1 : NNReal) := by
+    apply (div_le_one (by norm_num)).2
+    exact (edgeChance_le_one n).trans (by norm_num)
+  have hsmall : 1 / (d : ℝ) ≤ (edgeChance n : ℝ) / 2 := by
+    have hcast :
+        ((200 * ((n + 1 : ℕ) : NNReal))⁻¹ : ℝ) ≤ (edgeChance n : ℝ) := by
+      exact_mod_cast twice_target_inv_le_edgeChance n
+    calc
+      1 / (d : ℝ) = (200 * (n + 1 : ℝ))⁻¹ / 2 := by
+        dsimp only [d]
+        push_cast
+        field_simp
+        ring
+      _ ≤ (edgeChance n : ℝ) / 2 := by
+        gcongr
+        simpa using hcast
   have hbase :
-      ((1 - edgeChance n / 2 : NNReal) : ℝ) =
+      ((1 - edgeChance n / 2 : NNReal) : ℝ) ≤
         1 - 1 / (d : ℝ) := by
-    have hp2 : edgeChance n / 2 ≤ (1 : NNReal) := by
-      apply (div_le_one (by norm_num)).2
-      exact (edgeChance_le_one n).trans (by norm_num)
-    rw [NNReal.coe_sub hp2]
-    congr 1
-    rw [edgeChance, NNReal.coe_div, NNReal.coe_inv]
-    push_cast
-    dsimp only [d]
-    field_simp
-    push_cast
-    ring
+    rw [NNReal.coe_sub hp2, NNReal.coe_div]
+    norm_num at *
+    linarith
+  have hbaseNonneg :
+      0 ≤ ((1 - edgeChance n / 2 : NNReal) : ℝ) := by positivity
   have hpow :
       (1 - 1 / (d : ℝ)) ^ d ≤ Real.exp (-1) := by
     exact Real.one_sub_div_pow_le_exp_neg (by exact_mod_cast hdpos)
@@ -1546,15 +1722,15 @@ lemma survival_block_le_half (n : ℕ) :
   rw [← NNReal.coe_le_coe]
   simp only [NNReal.coe_pow, NNReal.coe_div, NNReal.coe_one,
     NNReal.coe_ofNat]
-  rw [show 200 * (n + 1) = d by rfl, hbase]
-  exact hpow.trans hexp
+  rw [show 400 * (n + 1) = d by rfl]
+  exact (pow_le_pow_left₀ hbaseNonneg hbase _).trans (hpow.trans hexp)
 
 /-- At the chosen level, edge density supplies all the survival blocks used in
 the discrete union bound. -/
 lemma soundness_blocks_fit {n : ℕ} (H : SimpleGraph (Fin n))
     (S : Finset (BlowupVertex n)) (hn : 0 < n)
     (hcard : S.card = soundnessLevel H) :
-    200 * (n + 1) * soundnessBlocks H ≤
+    400 * (n + 1) * soundnessBlocks H ≤
       (variablesOf H (Sum.inr S)).card := by
   have hα := indepNum_pos_of_nonempty H hn
   have hl : 0 < Nat.log2 n + 1 := Nat.succ_pos _
@@ -1564,14 +1740,14 @@ lemma soundness_blocks_fit {n : ℕ} (H : SimpleGraph (Fin n))
       2 * H.indepNum * (n + 1) =
           (H.indepNum * (n + 1)) * 2 := by ring
       _ ≤ (H.indepNum * (n + 1)) *
-          (3200 * (Nat.log2 n + 1)) := by
+          (6400 * (Nat.log2 n + 1)) := by
         apply Nat.mul_le_mul_left
         omega
-      _ = 3200 * H.indepNum * (n + 1) *
+      _ = 6400 * H.indepNum * (n + 1) *
           (Nat.log2 n + 1) := by ring
   have hdensity := queryScope_density H S hn hlarge
   have hid :
-      4 * H.indepNum * (200 * (n + 1) * soundnessBlocks H) =
+      4 * H.indepNum * (400 * (n + 1) * soundnessBlocks H) =
         (soundnessLevel H) ^ 2 := by
     simp only [soundnessBlocks, soundnessLevel]
     ring
@@ -1582,7 +1758,7 @@ lemma soundness_blocks_fit {n : ℕ} (H : SimpleGraph (Fin n))
     exact_mod_cast hdensity
   rw [← hid] at hdensityNat
   have hc :
-      (4 * H.indepNum) * (200 * (n + 1) * soundnessBlocks H) ≤
+      (4 * H.indepNum) * (400 * (n + 1) * soundnessBlocks H) ≤
         (4 * H.indepNum) * (variablesOf H (Sum.inr S)).card := by
     simpa only [mul_assoc] using hdensityNat
   exact le_of_mul_le_mul_left hc (mul_pos (by norm_num) hα)
@@ -1606,9 +1782,9 @@ lemma query_probability_at_soundnessLevel {n : ℕ}
           (variablesOf H (Sum.inr S)).card :=
       query_output_probability_le H S
     _ ≤ ((1 - edgeChance n / 2 : NNReal) : ℝ≥0∞) ^
-        (200 * (n + 1) * soundnessBlocks H) := by
+        (400 * (n + 1) * soundnessBlocks H) := by
       exact pow_le_pow_right_of_le_one' (by exact_mod_cast hbase) hfit
-    _ = ((((1 - edgeChance n / 2 : NNReal) ^ (200 * (n + 1))) ^
+    _ = ((((1 - edgeChance n / 2 : NNReal) ^ (400 * (n + 1))) ^
           soundnessBlocks H : NNReal) : ℝ≥0∞) := by
       rw [pow_mul, ENNReal.coe_pow, ENNReal.coe_pow]
     _ ≤ ((((1 / 2 : NNReal) ^ soundnessBlocks H : NNReal)) : ℝ≥0∞) := by
@@ -1658,7 +1834,7 @@ lemma soundness_family_weight_le_quarter {n : ℕ}
     ((soundnessFamily H).card : NNReal) *
         (1 / 2 : NNReal) ^ soundnessBlocks H ≤ 1 / 4 := by
   let l : ℕ := Nat.log2 n + 1
-  let e : ℕ := 6400 * H.indepNum * (n + 1) * l ^ 2
+  let e : ℕ := 12800 * H.indepNum * (n + 1) * l ^ 2
   have hα := indepNum_pos_of_nonempty H hn
   have hl : 0 < l := by simp [l]
   have hnle : n ≤ 2 ^ l := by
@@ -1691,8 +1867,8 @@ lemma soundness_family_weight_le_quarter {n : ℕ}
   have hrest : 0 < H.indepNum * (n + 1) * l ^ 2 := by positivity
   have he : 2 ≤ e := by
     calc
-      2 ≤ 6400 := by norm_num
-      _ ≤ 6400 * (H.indepNum * (n + 1) * l ^ 2) :=
+      2 ≤ 12800 := by norm_num
+      _ ≤ 12800 * (H.indepNum * (n + 1) * l ^ 2) :=
         Nat.le_mul_of_pos_right _ hrest
       _ = e := by simp only [e]; ring
   have hfamilyNN : ((soundnessFamily H).card : NNReal) ≤
@@ -1776,7 +1952,7 @@ $C\alpha n\log n$ cutoff, with a uniform numerical constant. -/
 lemma soundnessLevel_le_real_log {n : ℕ} (H : SimpleGraph (Fin n))
     (hn : 3 ≤ n) :
     (soundnessLevel H : ℝ) ≤
-      20000 * H.indepNum * n * Real.log n := by
+      40000 * H.indepNum * n * Real.log n := by
   have hnreal : (3 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
   have hlogmono : Real.log 3 ≤ Real.log n :=
     Real.log_le_log (by norm_num) hnreal
@@ -1807,29 +1983,29 @@ lemma soundnessLevel_le_real_log {n : ℕ} (H : SimpleGraph (Fin n))
     simpa using hl
   calc
     (soundnessLevel H : ℝ) =
-        3200 * H.indepNum * (n + 1) * (Nat.log2 n + 1) := by
+        6400 * H.indepNum * (n + 1) * (Nat.log2 n + 1) := by
       simp only [soundnessLevel]
       push_cast
       ring
-    _ ≤ 3200 * H.indepNum * (2 * n) *
+    _ ≤ 6400 * H.indepNum * (2 * n) *
         ((Nat.log2 n : ℝ) + 1) := by
       exact mul_le_mul_of_nonneg_right
         (mul_le_mul_of_nonneg_left hnplus' (by positivity)) (by positivity)
-    _ ≤ 3200 * H.indepNum * (2 * n) * (3 * Real.log n) := by
+    _ ≤ 6400 * H.indepNum * (2 * n) * (3 * Real.log n) := by
       exact mul_le_mul_of_nonneg_left hl' (by positivity)
-    _ = 19200 * H.indepNum * n * Real.log n := by ring
-    _ ≤ 20000 * H.indepNum * n * Real.log n := by
+    _ = 38400 * H.indepNum * n * Real.log n := by ring
+    _ ≤ 40000 * H.indepNum * n * Real.log n := by
       have hnonneg : (0 : ℝ) ≤ H.indepNum * n * Real.log n := by positivity
       nlinarith
 
 theorem outputGraph_soundness_failure_le_quarter (n : ℕ) (hn : 3 ≤ n)
     (H : SimpleGraph (Fin n)) :
     sampleMeasure n
-      {table | 20000 * H.indepNum * n * Real.log n <
+      {table | 40000 * H.indepNum * n * Real.log n <
         ((outputGraph H table).indepNum : ℝ)} ≤
       ((1 / 4 : NNReal) : ℝ≥0∞) := by
   let bad : Set (SampleTable n) :=
-    {table | 20000 * H.indepNum * n * Real.log n <
+    {table | 40000 * H.indepNum * n * Real.log n <
       ((outputGraph H table).indepNum : ℝ)}
   have hnpos : 0 < n := lt_of_lt_of_le (by norm_num) hn
   have hbadSubset : bad ⊆
@@ -1849,20 +2025,143 @@ theorem outputGraph_soundness_failure_le_quarter (n : ℕ) (hn : 3 ≤ n)
 def cutoffBudget (n : ℕ) : ℕ :=
   12 * (n + 1) ^ 6
 
-/-- A uniform polynomial accounting for construction and resampling work. -/
-def constructionSteps (n : ℕ) : ℕ :=
-  12 * (n + 1) ^ 10
+/-- The assignment exposed after exactly the polynomial cutoff number of rounds. -/
+def cutoffAssignment {n : ℕ} (H : SimpleGraph (Fin n))
+    (table : SampleTable n) : EdgeVariable n → Bool :=
+  currentAssignment (fun _ : EdgeVariable n ↦ Bool) table
+    (runCounts (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) (selectionRule H) table (cutoffBudget n))
+
+/-- Whether the bounded resampling loop has halted by its cutoff. -/
+def haltedAtCutoff {n : ℕ} (H : SimpleGraph (Fin n))
+    (table : SampleTable n) : Prop :=
+  resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+    (badVariables H) (badSet H) (selectionRule H) table (cutoffBudget n) = none
+
+/-- The sampled blow-up graph exposed at the end of the bounded loop. -/
+def cutoffOutputGraph {n : ℕ} (H : SimpleGraph (Fin n))
+    (table : SampleTable n) : SimpleGraph (BlowupVertex n) :=
+  SimpleGraph.fromEdgeSet
+    {e | e ∈ (blowup H).edgeSet ∧ cutoffAssignment H table e = true}
+
+lemma runCounts_eq_of_log_none_of_le {n : ℕ} (H : SimpleGraph (Fin n))
+    (table : SampleTable n) {a b : ℕ} (hab : a ≤ b)
+    (ha : resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) (selectionRule H) table a = none) :
+    runCounts (fun _ : EdgeVariable n ↦ Bool)
+        (badVariables H) (badSet H) (selectionRule H) table b =
+      runCounts (fun _ : EdgeVariable n ↦ Bool)
+        (badVariables H) (badSet H) (selectionRule H) table a := by
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hab
+  induction d with
+  | zero => simp
+  | succ d ih =>
+      rw [Nat.add_succ, Lax41Proofs.runCounts_succ,
+        ih (Nat.le_add_right a d)]
+      have hnone := Lax41Proofs.resamplingLog_eq_none_of_le
+        (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
+        (selectionRule H) table (Nat.le_add_right a d) ha
+      simp [advanceCounts, hnone]
+
+lemma cutoffAssignment_eq_finalAssignment_of_halted {n : ℕ}
+    (H : SimpleGraph (Fin n)) (table : SampleTable n)
+    (hhalt : haltedAtCutoff H table) :
+    cutoffAssignment H table = finalAssignment H table := by
+  have hexists : ∃ t, resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) (selectionRule H) table t = none :=
+    ⟨cutoffBudget n, hhalt⟩
+  have hfirst : outputTime (fun _ : EdgeVariable n ↦ Bool)
+      (badEvents H) (variablesOf H) (eventSet H) (selectionRule H) table ≤
+      cutoffBudget n := by
+    rw [outputTime]
+    simp only [dif_pos hexists]
+    exact Nat.find_min' hexists hhalt
+  funext e
+  unfold cutoffAssignment finalAssignment outputAssignment
+  rw [runCounts_eq_of_log_none_of_le H table hfirst]
+  exact resamplingLog_outputTime_eq_none hexists
+
+lemma cutoffOutputGraph_eq_outputGraph_of_halted {n : ℕ}
+    (H : SimpleGraph (Fin n)) (table : SampleTable n)
+    (hhalt : haltedAtCutoff H table) :
+    cutoffOutputGraph H table = outputGraph H table := by
+  unfold cutoffOutputGraph outputGraph
+  rw [cutoffAssignment_eq_finalAssignment_of_halted H table hhalt]
+
+lemma resamplingRounds_le_resamplingSteps_of_log_some {n : ℕ}
+    (H : SimpleGraph (Fin n)) (table : SampleTable n)
+    {B : ℕ} {root : BadEventIndex (badEvents H)}
+    (hB : resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) (selectionRule H) table B = some root) :
+    ((B + 1 : ℕ) : ℝ≥0∞) ≤ resamplingSteps H table := by
+  classical
+  let term (A : BadEventIndex (badEvents H)) (t : ℕ) : ℝ≥0∞ :=
+    Set.indicator
+      {u | resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+        (badVariables H) (badSet H) (selectionRule H) table u = some A}
+      (fun _ ↦ (1 : ℝ≥0∞)) t
+  have hone (t : ℕ) (ht : t < B + 1) :
+      (1 : ℝ≥0∞) ≤ ∑ A : BadEventIndex (badEvents H), term A t := by
+    have htB : t ≤ B := by omega
+    by_cases heq : t = B
+    · subst t
+      rw [Finset.sum_eq_single root]
+      · simp [term, hB]
+      · intro A _ hne
+        simp [term, hB, Ne.symm hne]
+      · simp
+    · have htlt : t < B := lt_of_le_of_ne htB heq
+      obtain ⟨A, hA⟩ := Lax41Proofs.resamplingLog_eq_some_of_lt_of_some
+        (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
+        (selectionRule H) table hB htlt
+      rw [Finset.sum_eq_single A]
+      · simp [term, hA]
+      · intro C _ hne
+        simp [term, hA, Ne.symm hne]
+      · simp
+  calc
+    ((B + 1 : ℕ) : ℝ≥0∞) =
+        ∑ _t ∈ Finset.range (B + 1), (1 : ℝ≥0∞) := by simp
+    _ ≤ ∑ t ∈ Finset.range (B + 1),
+        ∑ A : BadEventIndex (badEvents H), term A t := by
+      apply Finset.sum_le_sum
+      intro t ht
+      exact hone t (Finset.mem_range.mp ht)
+    _ ≤ ∑' t : ℕ, ∑ A : BadEventIndex (badEvents H), term A t :=
+      ENNReal.sum_le_tsum _
+    _ = ∑ A : BadEventIndex (badEvents H), ∑' t : ℕ, term A t := by
+      simpa only [tsum_fintype] using
+        (ENNReal.tsum_comm (f := fun t A ↦ term A t))
+    _ = resamplingSteps H table := by
+      unfold resamplingSteps resamplingCount
+      rfl
 
 /-- The actual number of resamplings stays within the cutoff budget. -/
 def withinBudget {n : ℕ} (H : SimpleGraph (Fin n)) (table : SampleTable n) : Prop :=
   resamplingSteps H table < cutoffBudget n
+
+lemma haltedAtCutoff_of_withinBudget {n : ℕ}
+    (H : SimpleGraph (Fin n)) (table : SampleTable n)
+    (hbudget : withinBudget H table) : haltedAtCutoff H table := by
+  cases hlog : resamplingLog (fun _ : EdgeVariable n ↦ Bool)
+      (badVariables H) (badSet H) (selectionRule H) table (cutoffBudget n) with
+  | none => exact hlog
+  | some root =>
+      have hrounds := resamplingRounds_le_resamplingSteps_of_log_some
+        H table hlog
+      have hcutoff : ((cutoffBudget n : ℕ) : ℝ≥0∞) ≤ resamplingSteps H table := by
+        have hsucc : ((cutoffBudget n : ℕ) : ℝ≥0∞) ≤
+            (((cutoffBudget n) + 1 : ℕ) : ℝ≥0∞) := by
+          exact_mod_cast Nat.le_succ (cutoffBudget n)
+        exact hsucc.trans hrounds
+      exact False.elim (not_lt_of_ge hcutoff hbudget)
 
 /-- Run the triangle-removal construction within its polynomial budget and
 return the edgeless graph on a cutoff failure. -/
 noncomputable def truncatedGraph {n : ℕ} (H : SimpleGraph (Fin n))
     (table : SampleTable n) : SimpleGraph (BlowupVertex n) := by
   classical
-  exact if withinBudget H table then outputGraph H table else ⊥
+  exact if haltedAtCutoff H table then cutoffOutputGraph H table else ⊥
 
 lemma resamplingSteps_lt_top_of_withinBudget {n : ℕ}
     (H : SimpleGraph (Fin n)) (table : SampleTable n)
@@ -1874,10 +2173,10 @@ theorem truncatedGraph_triangleFree {n : ℕ} (H : SimpleGraph (Fin n))
     (table : SampleTable n) : (truncatedGraph H table).CliqueFree 3 := by
   classical
   rw [truncatedGraph]
-  split_ifs with hbudget
-  · exact outputGraph_triangleFree_of_terminates H table
-      (exists_termination_time_of_resamplingSteps_lt_top
-        (resamplingSteps_lt_top_of_withinBudget H table hbudget))
+  split_ifs with hhalt
+  · rw [cutoffOutputGraph_eq_outputGraph_of_halted H table hhalt]
+    exact outputGraph_triangleFree_of_terminates H table
+      ⟨cutoffBudget n, hhalt⟩
   · simp
 
 lemma indepNum_mul_le_blowup_card {n : ℕ} (H : SimpleGraph (Fin n)) :
@@ -1893,8 +2192,9 @@ theorem truncatedGraph_completeness {n : ℕ} (H : SimpleGraph (Fin n))
     H.indepNum * n ≤ (truncatedGraph H table).indepNum := by
   classical
   rw [truncatedGraph]
-  split_ifs with hbudget
-  · exact outputGraph_completeness H table
+  split_ifs with hhalt
+  · rw [cutoffOutputGraph_eq_outputGraph_of_halted H table hhalt]
+    exact outputGraph_completeness H table
   · let S : Finset (BlowupVertex n) := Finset.univ
     have hS : (⊥ : SimpleGraph (BlowupVertex n)).IsIndepSet S := by
       intro u hu v hv huv hadj
@@ -1944,14 +2244,14 @@ lemma measure_outsideBudget_le {n : ℕ} (H : SimpleGraph (Fin n)) :
 theorem truncatedGraph_soundness_failure_le_third (n : ℕ) (hn : 3 ≤ n)
     (H : SimpleGraph (Fin n)) :
     sampleMeasure n
-      {table | 20000 * H.indepNum * n * Real.log n <
+      {table | 40000 * H.indepNum * n * Real.log n <
         ((truncatedGraph H table).indepNum : ℝ)} ≤ (1 : ℝ≥0∞) / 3 := by
   let originalBad : Set (SampleTable n) :=
-    {table | 20000 * H.indepNum * n * Real.log n <
+    {table | 40000 * H.indepNum * n * Real.log n <
       ((outputGraph H table).indepNum : ℝ)}
   let outside : Set (SampleTable n) := {table | ¬withinBudget H table}
   let truncatedBad : Set (SampleTable n) :=
-    {table | 20000 * H.indepNum * n * Real.log n <
+    {table | 40000 * H.indepNum * n * Real.log n <
       ((truncatedGraph H table).indepNum : ℝ)}
   have horiginal : sampleMeasure n originalBad ≤
       ((1 / 4 : NNReal) : ℝ≥0∞) := by
@@ -1962,12 +2262,15 @@ theorem truncatedGraph_soundness_failure_le_third (n : ℕ) (hn : 3 ≤ n)
     intro table hbad
     by_cases hbudget : withinBudget H table
     · apply Or.inl
-      change 20000 * H.indepNum * n * Real.log n <
+      have hhalt := haltedAtCutoff_of_withinBudget H table hbudget
+      have heq : truncatedGraph H table = outputGraph H table := by
+        rw [truncatedGraph, if_pos hhalt,
+          cutoffOutputGraph_eq_outputGraph_of_halted H table hhalt]
+      change 40000 * H.indepNum * n * Real.log n <
         ((outputGraph H table).indepNum : ℝ)
-      change 20000 * H.indepNum * n * Real.log n <
+      change 40000 * H.indepNum * n * Real.log n <
         ((truncatedGraph H table).indepNum : ℝ) at hbad
-      classical
-      simpa only [truncatedGraph, hbudget, if_true] using hbad
+      simpa only [heq] using hbad
     · exact Or.inr hbudget
   calc
     sampleMeasure n truncatedBad ≤ sampleMeasure n (originalBad ∪ outside) :=
@@ -1979,34 +2282,6 @@ theorem truncatedGraph_soundness_failure_le_third (n : ℕ) (hn : 3 ≤ n)
     _ = (1 : ℝ≥0∞) / 3 := by
       rw [← ENNReal.coe_add]
       norm_num
-
-/-- The complete polynomial-cutoff randomized reduction certificate. -/
-noncomputable def reduction : TriangleFreeReduction where
-  measure := sampleMeasure
-  output := fun _ H ↦ truncatedGraph H
-  steps := fun n _ _ ↦ constructionSteps n
-  probability := by
-    intro n
-    unfold sampleMeasure tableMeasure
-    infer_instance
-  triangleFree := by
-    intro _ H table
-    exact truncatedGraph_triangleFree H table
-  completeness := by
-    intro _ H table
-    exact truncatedGraph_completeness H table
-  soundnessConstant := 20000
-  soundnessCutoff := 3
-  soundnessConstant_pos := by norm_num
-  soundness := by
-    intro n hn H
-    exact truncatedGraph_soundness_failure_le_third n hn H
-  stepConstant := 12
-  stepExponent := 10
-  stepConstant_pos := by norm_num
-  stepBound := by
-    intro n H table
-    simp [constructionSteps]
 
 end
 

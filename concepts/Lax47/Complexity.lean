@@ -1,158 +1,114 @@
+import Lax47.Machine
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Finset.Card
-import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
 
 /-!
 ---
-title: Complexity and approximation definitions for Max Independent Set
+title: Executable graph encodings and triangle-free approximation
 type: definition
 ---
-This concept fixes the computational meaning of the inapproximability
-statement without choosing a machine model. A computation is accompanied by
-the number of elementary steps that it takes, and polynomial time means that
-this number is bounded by a fixed polynomial in the input length. The class
-$NP$ uses polynomially long certificates checked in polynomially many steps.
-The class $BPP$ uses polynomially many uniformly random bits, polynomially
-many steps, and two-sided error at most one third.
-
-A Max Independent Set approximation algorithm similarly supplies its output
-and step count. On every triangle-free graph with $N$ vertices it takes
-polynomially many steps, returns an independent set, and has size at least the
-optimum divided by $N^{1/2-\varepsilon}$.
-
-The general-graph promise-gap solver used to state Håstad's premise may use a
-bundled probability space. It must run in polynomially many steps and, for all
-sufficiently large $n$, distinguish
-$\alpha(H)\ge n^{1-\delta}$ from $\alpha(H)\le n^\delta$ with error at most
-one third.
+Graphs are finite Boolean adjacency matrices with symmetry and looplessness
+certificates.  Their machine encoding is the unary vertex count followed by
+the complete row-major matrix.  An approximation is a binary Turing program;
+its returned independent set is decoded from the program's actual output
+bits.  No Lean function supplies a separate semantic answer or a detached
+running-time annotation.
 -/
 
 set_option autoImplicit false
 
-open scoped ENNReal
-
 namespace Lax47.Complexity
 
-/-- A finite binary input or certificate. -/
-abbrev BitString := List Bool
+open Lax47.Machine
 
-/-- A decision problem over finite binary inputs. -/
-abbrev Language := Set BitString
+export Lax47.Machine
+  (BitString Language RandomSeed PolytimeProgram NPVerifier BPPAlgorithm
+    InNP InBPP NPSubsetBPP polynomialBound pairBits)
 
-/-- The polynomial $c(n+1)^k$, including a harmless offset at size zero. -/
-def polynomialBound (c k n : ℕ) : ℕ :=
-  c * (n + 1) ^ k
+/-- An executable simple graph on the labeled vertex set $\operatorname{Fin}(n)$. -/
+structure GraphCode (n : ℕ) where
+  adjacent : Fin n → Fin n → Bool
+  loopless : ∀ vertex, adjacent vertex vertex = false
+  symmetric : ∀ left right, adjacent left right = adjacent right left
 
-/-- A family of step counts is bounded by a polynomial in the chosen size. -/
-def HasPolynomialStepBound {Input : Type} (size steps : Input → ℕ) : Prop :=
-  ∃ c k : ℕ, 0 < c ∧ ∀ x, steps x ≤ polynomialBound c k (size x)
+/-- The mathematical simple graph represented by a Boolean adjacency matrix. -/
+def GraphCode.graph {n : ℕ} (code : GraphCode n) : SimpleGraph (Fin n) where
+  Adj left right := code.adjacent left right = true
+  symm left right h := by
+    change code.adjacent right left = true
+    rw [← code.symmetric]
+    exact h
+  loopless := ⟨fun vertex ↦ by
+    simp [code.loopless]⟩
 
-/-- A deterministic verifier with explicit certificate and step bounds. -/
-structure NPVerifier (L : Language) where
-  accepts : BitString → BitString → Bool
-  steps : BitString → BitString → ℕ
-  certificateConstant : ℕ
-  certificateExponent : ℕ
-  certificateConstant_pos : 0 < certificateConstant
-  stepConstant : ℕ
-  stepExponent : ℕ
-  stepConstant_pos : 0 < stepConstant
-  stepBound : ∀ x certificate,
-    certificate.length ≤ polynomialBound certificateConstant certificateExponent x.length →
-    steps x certificate ≤ polynomialBound stepConstant stepExponent x.length
-  correctness : ∀ x : BitString,
-    x ∈ L ↔ ∃ certificate : BitString,
-      certificate.length ≤ polynomialBound certificateConstant certificateExponent x.length ∧
-      accepts x certificate = true
+@[simp] lemma GraphCode.graph_adj {n : ℕ} (code : GraphCode n)
+    (left right : Fin n) :
+    code.graph.Adj left right ↔ code.adjacent left right = true :=
+  Iff.rfl
 
-/-- A language belongs to $NP$ in the abstract step-count model. -/
-def InNP (L : Language) : Prop :=
-  Nonempty (NPVerifier L)
+/-- Unary length followed by the row-major adjacency matrix. -/
+def GraphCode.bits {n : ℕ} (code : GraphCode n) : BitString :=
+  List.replicate n true ++ false ::
+    (List.ofFn fun left : Fin n ↦
+      List.ofFn fun right : Fin n ↦ code.adjacent left right).flatten
 
-/-- A seed of $r$ independent uniformly random bits. -/
-abbrev RandomSeed (r : ℕ) := Fin r → Bool
+lemma GraphCode.bits_length {n : ℕ} (code : GraphCode n) :
+    code.bits.length = n + 1 + n * n := by
+  have hrows :
+      List.map List.length
+          (List.ofFn fun left : Fin n ↦
+            List.ofFn fun right : Fin n ↦ code.adjacent left right) =
+        List.replicate n n := by
+    rw [List.map_ofFn]
+    rw [← List.ofFn_const]
+    congr 1
+    funext left
+    simp
+  unfold GraphCode.bits
+  rw [List.length_append, List.length_replicate, List.length_cons,
+    List.length_flatten, hrows, List.sum_replicate]
+  simp [Nat.add_comm, Nat.add_left_comm]
 
-/-- A bounded-error randomized decision algorithm with explicit step count. -/
-structure BPPAlgorithm (L : Language) where
-  randomnessConstant : ℕ
-  randomnessExponent : ℕ
-  randomnessConstant_pos : 0 < randomnessConstant
-  stepConstant : ℕ
-  stepExponent : ℕ
-  stepConstant_pos : 0 < stepConstant
-  accepts : (x : BitString) →
-    RandomSeed (polynomialBound randomnessConstant randomnessExponent x.length) → Bool
-  steps : (x : BitString) →
-    RandomSeed (polynomialBound randomnessConstant randomnessExponent x.length) → ℕ
-  stepBound : ∀ x seed,
-    steps x seed ≤ polynomialBound stepConstant stepExponent x.length
-  correctness : ∀ x : BitString,
-    let seeds : Finset
-        (RandomSeed (polynomialBound randomnessConstant randomnessExponent x.length)) :=
-      Finset.univ
-    let accepting := seeds.filter fun seed ↦ accepts x seed = true
-    (x ∈ L → 2 * seeds.card ≤ 3 * accepting.card) ∧
-      (x ∉ L → 3 * accepting.card ≤ seeds.card)
+/-- The edgeless executable graph. -/
+def GraphCode.empty (n : ℕ) : GraphCode n where
+  adjacent := fun _ _ ↦ false
+  loopless := by simp
+  symmetric := by simp
 
-/-- A language belongs to $BPP$ in the abstract step-count model. -/
-def InBPP (L : Language) : Prop :=
-  Nonempty (BPPAlgorithm L)
+/-- Decode the first $n$ output bits as a vertex set. -/
+def decodeVertexSet (n : ℕ) (bits : BitString) : Finset (Fin n) :=
+  Finset.univ.filter fun vertex ↦ bits[vertex.1]? = some true
 
-/-- The complexity-class inclusion appearing in the theorem. -/
-def NPSubsetBPP : Prop :=
-  ∀ L : Language, InNP L → InBPP L
-
-/-- A probability space bundled so that a randomized graph algorithm may choose its sample type. -/
-structure ProbabilitySpace where
-  Sample : Type
-  measurableSpace : MeasurableSpace Sample
-  measure : @MeasureTheory.Measure Sample measurableSpace
-  probability : @MeasureTheory.IsProbabilityMeasure Sample measurableSpace measure
-
-instance (P : ProbabilitySpace) : MeasurableSpace P.Sample :=
-  P.measurableSpace
-
-instance (P : ProbabilitySpace) : MeasureTheory.IsProbabilityMeasure P.measure :=
-  P.probability
-
-/-- A polynomial-step approximation algorithm for triangle-free Max Independent Set. -/
+/-- A polynomial-time executable approximation for triangle-free Max Independent Set. -/
 structure TriangleFreeMISApproximation (ε : ℝ) where
-  output : ∀ (V : Type) [Fintype V] [DecidableEq V], SimpleGraph V → Finset V
-  steps : ∀ (V : Type) [Fintype V] [DecidableEq V], SimpleGraph V → ℕ
-  stepConstant : ℕ
-  stepExponent : ℕ
-  stepConstant_pos : 0 < stepConstant
-  stepBound : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
-    steps V G ≤ polynomialBound stepConstant stepExponent (Fintype.card V)
-  independent : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
-    G.CliqueFree 3 → G.IsIndepSet (output V G)
-  approximation : ∀ (V : Type) [Fintype V] [DecidableEq V] (G : SimpleGraph V),
-    G.CliqueFree 3 →
-    (G.indepNum : ℝ) ≤
-      Real.rpow (Fintype.card V) ((1 : ℝ) / 2 - ε) * (output V G).card
+  program : PolytimeProgram
+  correctness : ∀ (n : ℕ) (code : GraphCode n),
+    code.graph.CliqueFree 3 →
+    let set := decodeVertexSet n (program.output code.bits)
+    code.graph.IsIndepSet set ∧
+      (code.graph.indepNum : ℝ) ≤
+        Real.rpow n ((1 : ℝ) / 2 - ε) * set.card
 
-/--
-A bounded-error polynomial-step solver for Håstad's promise gap.
-Correctness is required only beyond a fixed cutoff, which is equivalent for
-hardness purposes because the finitely many smaller graphs can be handled
-exactly.
--/
-structure MISGapSolver (δ : ℝ) where
-  sampleSpace : ℕ → ProbabilitySpace
-  accepts : (n : ℕ) → SimpleGraph (Fin n) → (sampleSpace n).Sample → Prop
-  steps : (n : ℕ) → SimpleGraph (Fin n) → (sampleSpace n).Sample → ℕ
-  stepConstant : ℕ
-  stepExponent : ℕ
-  stepConstant_pos : 0 < stepConstant
-  stepBound : ∀ (n : ℕ) (H : SimpleGraph (Fin n)) (sample : (sampleSpace n).Sample),
-    steps n H sample ≤ polynomialBound stepConstant stepExponent n
-  cutoff : ℕ
-  completeness : ∀ (n : ℕ), cutoff ≤ n → ∀ H : SimpleGraph (Fin n),
-    Real.rpow n (1 - δ) ≤ H.indepNum →
-      (2 : ℝ≥0∞) / 3 ≤ (sampleSpace n).measure {sample | accepts n H sample}
-  soundness : ∀ (n : ℕ), cutoff ≤ n → ∀ H : SimpleGraph (Fin n),
-    (H.indepNum : ℝ) ≤ Real.rpow n δ →
-      (sampleSpace n).measure {sample | accepts n H sample} ≤ (1 : ℝ≥0∞) / 3
+/-- The vertex set decoded from the certified machine's output. -/
+def TriangleFreeMISApproximation.output
+    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
+    {n : ℕ} (code : GraphCode n) : Finset (Fin n) :=
+  decodeVertexSet n (algorithm.program.output code.bits)
+
+/-- The decoded output is independent on every triangle-free input. -/
+theorem TriangleFreeMISApproximation.independent
+    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
+    {n : ℕ} (code : GraphCode n) (triangleFree : code.graph.CliqueFree 3) :
+    code.graph.IsIndepSet (algorithm.output code) :=
+  (algorithm.correctness n code triangleFree).1
+
+/-- The decoded output has the claimed approximation ratio. -/
+theorem TriangleFreeMISApproximation.approximation
+    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
+    {n : ℕ} (code : GraphCode n) (triangleFree : code.graph.CliqueFree 3) :
+    (code.graph.indepNum : ℝ) ≤
+      Real.rpow n ((1 : ℝ) / 2 - ε) * (algorithm.output code).card :=
+  (algorithm.correctness n code triangleFree).2
 
 end Lax47.Complexity
