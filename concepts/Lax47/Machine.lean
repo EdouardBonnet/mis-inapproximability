@@ -20,7 +20,7 @@ set_option autoImplicit false
 
 namespace Lax47.Machine
 
-open Lax51.TuringPolytime
+open Lax51.BinaryWordEncoding Lax51.TuringPolytime
 
 /-- A finite machine word.  Boolean data use the entries $0$ and $1$. -/
 abbrev BitString := List ℕ
@@ -57,7 +57,7 @@ def RandomSeed.bits {r : ℕ} (seed : RandomSeed r) : BitString :=
 /-- A decision problem over finite words. -/
 abbrev Language := Set BitString
 
-/-- A polynomial-time verifier with polynomially bounded certificates. -/
+/-- A polynomial-time verifier whose certificate binary size is polynomially bounded. -/
 structure NPVerifier (language : Language) where
   program : PolytimeProgram
   certificateConstant : ℕ
@@ -65,15 +65,15 @@ structure NPVerifier (language : Language) where
   certificateConstant_pos : 0 < certificateConstant
   correctness : ∀ input : BitString,
     input ∈ language ↔ ∃ certificate : BitString,
-      certificate.length ≤ polynomialBound
-        certificateConstant certificateExponent input.length ∧
+      bitSize certificate ≤ polynomialBound
+        certificateConstant certificateExponent (bitSize input) ∧
       program.output (pairBits input certificate) = [1]
 
 /-- Membership in $NP$ in the Lax51 finite-Turing model. -/
 def InNP (language : Language) : Prop :=
   Nonempty (NPVerifier language)
 
-/-- A polynomial-time randomized decision program using finitely many bits. -/
+/-- A polynomial-time randomized decision program using polynomially many uniform bits. -/
 structure BPPAlgorithm (language : Language) where
   program : PolytimeProgram
   randomnessConstant : ℕ
@@ -81,7 +81,7 @@ structure BPPAlgorithm (language : Language) where
   randomnessConstant_pos : 0 < randomnessConstant
   correctness : ∀ input : BitString,
     let randomBitCount := polynomialBound
-      randomnessConstant randomnessExponent input.length
+      randomnessConstant randomnessExponent (bitSize input)
     let seeds : Finset (RandomSeed randomBitCount) := Finset.univ
     let accepting := seeds.filter fun seed ↦
       program.output (pairBits input seed.bits) = [1]
