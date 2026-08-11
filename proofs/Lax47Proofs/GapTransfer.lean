@@ -1,5 +1,5 @@
 import Lax47.Hastad
-import Lax47Proofs.OperationalReduction
+import Lax47Proofs.GapMachinePolytime
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 
 set_option autoImplicit false
@@ -8,7 +8,8 @@ namespace Lax47Proofs.GapTransfer
 
 open Lax47.Machine Lax47.Complexity Lax47.Reduction Lax47.Gap
 open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
-open Lax47Proofs.OperationalReduction
+open Lax47Proofs.OperationalReduction Lax47Proofs.FlatReduction
+open Lax47Proofs.GapMachine
 open Filter Asymptotics
 
 /-! ### Correctness and cost of the executable threshold arithmetic -/
@@ -365,6 +366,12 @@ lemma low_soundness_threshold (C : ℝ) (q n : ℕ) (hC : 0 < C)
       rw [realGapThreshold]
       congr 1 <;> ring
 
+/-
+The previous draft's detached cost accounting and bespoke
+`GapProgram.triangleReduction` packaging are retained in this source comment
+only for historical orientation.  The live proof below uses the single
+machine function from `GapMachinePolytime`.
+
 /-! ### Polynomial resources of the composed program -/
 
 lemma executionOutput_bits_length_add_one_le {n : ℕ}
@@ -686,6 +693,174 @@ noncomputable def gapSolver (q : ℕ) {ε : ℝ}
     intro n hn input hlow
     have hn3 : 3 ≤ n := (three_le_gapCutoff q (by omega)).trans hn
     apply triangleProgram_soundness q (by omega) algorithm n hn3 input hlow
+    exact gapCutoff_log q (by omega) n hn
+
+-/
+
+/-! ### The machine-only certified Håstad-gap solver -/
+
+/-- The one finite-Turing polynomial-time program implementing the reduction,
+the supplied approximation, and the gap test. -/
+noncomputable def machineGapPolytimeProgram (q : ℕ) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) : PolytimeProgram where
+  function := gapFunction q algorithm
+  polytime := gapFunction_turingPolytime q algorithm
+
+/-- The machine program equipped with its standard flat uniform random tape. -/
+noncomputable def machineGapProgram (q : ℕ) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) : GapProgram q where
+  program := machineGapPolytimeProgram q algorithm
+  randomBitCount := flatRandomBitCount
+
+lemma machineGapProgram_accepts_iff {q : ℕ} (hq : 0 < q) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) (hn : 0 < n)
+    (input : GraphCode n) (seed : FlatExecutionSeed n) :
+    (machineGapProgram q algorithm).accepts n input seed = true ↔
+      realGapThreshold q n ≤
+        (algorithm.output
+          (executionOutput input (executionSeedOfFlat seed))).card := by
+  have outputEq :
+      gapFunction q algorithm (pairBits input.bits seed.bits) =
+        (if n ^ (q + 3) ≤
+            (algorithm.output
+              (executionOutput input (executionSeedOfFlat seed))).card ^ q
+          then [1] else [0]) := by
+    unfold gapFunction
+    rw [rawOrder_pairBits input seed]
+    simp only [show n ≠ 0 by omega, ↓reduceIte]
+    rw [rawGraphCodeAt_pairBits input seed, rawFlatSeedAt_pairBits input seed]
+    rfl
+  change decide
+      (gapFunction q algorithm (pairBits input.bits seed.bits) = [1]) = true ↔ _
+  rw [outputEq, ← naturalGapThreshold_iff hq]
+  by_cases threshold : n ^ (q + 3) ≤
+      (algorithm.output
+        (executionOutput input (executionSeedOfFlat seed))).card ^ q
+  <;> simp [threshold]
+
+theorem machineGapProgram_completeness (q : ℕ) (hq : 0 < q) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε)
+    (hqε : 2 * (q : ℝ)⁻¹ ≤ ε) (n : ℕ) (hn : 1 ≤ n)
+    (input : GraphCode n)
+    (hhigh : Real.rpow n (1 - (q : ℝ)⁻¹) ≤
+      (input.graph.indepNum : ℝ)) :
+    2 * ((machineGapProgram q algorithm).seeds n).card ≤
+      3 * ((machineGapProgram q algorithm).acceptingSeeds n input).card := by
+  classical
+  let program := machineGapProgram q algorithm
+  have hall : ∀ seed ∈ program.seeds n,
+      program.accepts n input seed = true := by
+    intro seed _
+    apply (machineGapProgram_accepts_iff hq algorithm n (by omega)
+      input seed).2
+    exact high_output_card algorithm hqε n hn input
+      (executionSeedOfFlat seed) hhigh
+  have hfilter :
+      (program.seeds n).filter (fun seed ↦ program.accepts n input seed) =
+        program.seeds n := Finset.filter_eq_self.2 hall
+  change 2 * (program.seeds n).card ≤
+    3 * (program.acceptingSeeds n input).card
+  unfold GapProgram.acceptingSeeds
+  rw [hfilter]
+  omega
+
+theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) (hn : 3 ≤ n)
+    (input : GraphCode n)
+    (hlow : (input.graph.indepNum : ℝ) ≤ Real.rpow n (q : ℝ)⁻¹)
+    (hlog : 40000 * Real.log n < Real.rpow n (2 * (q : ℝ)⁻¹)) :
+    3 * ((machineGapProgram q algorithm).acceptingSeeds n input).card ≤
+      ((machineGapProgram q algorithm).seeds n).card := by
+  classical
+  let program := machineGapProgram q algorithm
+  let predicate : ExecutionSeed n → Prop := fun structuredSeed ↦
+    40000 * input.graph.indepNum * n * Real.log n <
+      ((executionOutput input structuredSeed).graph.indepNum : ℝ)
+  let failures : Finset (FlatExecutionSeed n) :=
+    (Finset.univ : Finset (FlatExecutionSeed n)).filter fun seed ↦
+      predicate (executionSeedOfFlat seed)
+  have hsubset : program.acceptingSeeds n input ⊆ failures := by
+    intro seed hseed
+    have haccepts : program.accepts n input seed = true := by
+      simpa only [GapProgram.acceptingSeeds, Finset.mem_filter,
+        GapProgram.seeds, Finset.mem_univ, true_and] using hseed
+    have hacceptsReal : realGapThreshold q n ≤
+        (algorithm.output
+          (executionOutput input (executionSeedOfFlat seed))).card :=
+      (machineGapProgram_accepts_iff hq algorithm n (by omega)
+        input seed).1 haccepts
+    have hthreshold :
+        40000 * input.graph.indepNum * n * Real.log n <
+          realGapThreshold q n :=
+      low_soundness_threshold 40000 q n (by norm_num) hn input hlow hlog
+    have hindependent := algorithm.independent
+      (executionOutput input (executionSeedOfFlat seed))
+      (executionOutput_triangleFree_of_executionSeed input
+        (executionSeedOfFlat seed))
+    have hcard :
+        (algorithm.output
+          (executionOutput input (executionSeedOfFlat seed))).card ≤
+        (executionOutput input (executionSeedOfFlat seed)).graph.indepNum :=
+      hindependent.card_le_indepNum
+    have hcardReal :
+        ((algorithm.output
+          (executionOutput input (executionSeedOfFlat seed))).card : ℝ) ≤
+        (executionOutput input (executionSeedOfFlat seed)).graph.indepNum := by
+      exact_mod_cast hcard
+    have hfailure := hthreshold.trans_le (hacceptsReal.trans hcardReal)
+    exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hfailure⟩
+  have structuredFailure :=
+    executionSeed_soundness_failure_card_le_third n hn input
+  have flatFailure := flat_failure_card_le_third n predicate structuredFailure
+  calc
+    3 * (program.acceptingSeeds n input).card ≤ 3 * failures.card :=
+      Nat.mul_le_mul_left 3 (Finset.card_le_card hsubset)
+    _ ≤ (program.seeds n).card := by
+      simpa only [program, machineGapProgram, failures, predicate,
+        GapProgram.seeds, Finset.card_univ] using flatFailure
+
+lemma machineGapProgram_randomBitCount_polynomial (q : ℕ) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) :
+    (machineGapProgram q algorithm).randomBitCount n ≤
+      polynomialBound 1400 12 n := by
+  simpa [machineGapProgram, polynomialBound] using
+    flatRandomBitCount_polynomial n
+
+/-- A cutoff after which the logarithmic loss fits below $n^{2/q}$. -/
+noncomputable def gapCutoff (q : ℕ) (hq : 0 < q) : ℕ :=
+  max (Classical.choose (exists_log_cutoff 40000 q (by norm_num) hq)) 3
+
+lemma three_le_gapCutoff (q : ℕ) (hq : 0 < q) : 3 ≤ gapCutoff q hq := by
+  exact le_max_right _ _
+
+lemma gapCutoff_log (q : ℕ) (hq : 0 < q) (n : ℕ)
+    (hn : gapCutoff q hq ≤ n) :
+    40000 * Real.log n < Real.rpow n (2 * (q : ℝ)⁻¹) := by
+  apply Classical.choose_spec (exists_log_cutoff 40000 q (by norm_num) hq)
+  exact (le_max_left _ 3).trans hn
+
+/-- The fixed machine reduction followed by the supplied approximation solves
+Håstad's promise gap. -/
+noncomputable def gapSolver (q : ℕ) {ε : ℝ}
+    (algorithm : TriangleFreeMISApproximation ε) (hq : 3 ≤ q)
+    (hqε : 2 * (q : ℝ)⁻¹ ≤ ε) : MISGapSolver q where
+  program := machineGapProgram q algorithm
+  randomnessConstant := 1400
+  randomnessExponent := 12
+  randomnessConstant_pos := by norm_num
+  randomnessBound := machineGapProgram_randomBitCount_polynomial q algorithm
+  cutoff := gapCutoff q (by omega)
+  completeness := by
+    intro n hn input hhigh
+    exact machineGapProgram_completeness q (by omega) algorithm hqε n
+      (by
+        have : 3 ≤ n := (three_le_gapCutoff q (by omega)).trans hn
+        omega)
+      input hhigh
+  soundness := by
+    intro n hn input hlow
+    have hn3 : 3 ≤ n := (three_le_gapCutoff q (by omega)).trans hn
+    apply machineGapProgram_soundness q (by omega) algorithm n hn3 input hlow
     exact gapCutoff_log q (by omega) n hn
 
 /-- Every positive $ε$ admits an integer gap parameter with $2/q \leq ε$. -/

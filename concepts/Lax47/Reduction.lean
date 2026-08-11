@@ -134,19 +134,45 @@ def scanExecutionTriples {n : ℕ} (input : GraphCode n)
         let tail := scanExecutionTriples input seed counts rest
         (tail.1, executionTestSteps n + tail.2)
 
-/-- Scan all $n^6$ ordered triples in the fixed finite enumeration. -/
+/-- Row-major rank of one blow-up vertex. -/
+def executionVertexEquiv (n : ℕ) : BlowupVertex n ≃ Fin (n * n) :=
+  finProdFinEquiv
+
+/--
+Mixed-radix rank of an ordered triple of blow-up vertices.  Its value is
+$u(n^2)^2+v(n^2)+w$, where $u,v,w$ are the row-major vertex ranks.
+-/
+def executionTripleEquiv (n : ℕ) :
+    ExecutionTriple n ≃ Fin ((n * n) * (n * n) * (n * n)) :=
+  let rankVertices := Equiv.prodCongr (executionVertexEquiv n)
+    (Equiv.prodCongr (executionVertexEquiv n) (executionVertexEquiv n))
+  let rankTail := Equiv.prodCongr (Equiv.refl (Fin (n * n)))
+    (finProdFinEquiv : Fin (n * n) × Fin (n * n) ≃
+      Fin ((n * n) * (n * n)))
+  let rankAll :=
+    (finProdFinEquiv : Fin (n * n) × Fin ((n * n) * (n * n)) ≃
+      Fin ((n * n) * ((n * n) * (n * n))))
+  rankVertices.trans <| rankTail.trans <| rankAll.trans <| finCongr (by ring)
+
+/-- Scan all $n^6$ ordered triples in mixed-radix order. -/
 def executionTriples (n : ℕ) : List (ExecutionTriple n) :=
-  (List.finRange n).flatMap fun a ↦
-    (List.finRange n).flatMap fun a' ↦
-      (List.finRange n).flatMap fun b ↦
-        (List.finRange n).flatMap fun b' ↦
-          (List.finRange n).flatMap fun c ↦
-            (List.finRange n).map fun c' ↦
-              ((a, a'), (b, b'), (c, c'))
+  List.ofFn fun rank : Fin ((n * n) * (n * n) * (n * n)) ↦
+    (executionTripleEquiv n).symm rank
 
 @[simp] lemma mem_executionTriples {n : ℕ} (triple : ExecutionTriple n) :
     triple ∈ executionTriples n := by
-  rcases triple with ⟨⟨a, a'⟩, ⟨⟨b, b'⟩, ⟨c, c'⟩⟩⟩
+  rw [executionTriples, List.mem_ofFn]
+  exact ⟨executionTripleEquiv n triple,
+    (executionTripleEquiv n).symm_apply_apply triple⟩
+
+@[simp] lemma executionTriples_length (n : ℕ) :
+    (executionTriples n).length = (n * n) * (n * n) * (n * n) := by
+  simp [executionTriples]
+
+@[simp] lemma executionTriples_getElem {n i : ℕ}
+    (hi : i < (n * n) * (n * n) * (n * n)) :
+    (executionTriples n)[i]'(by simpa using hi) =
+      (executionTripleEquiv n).symm ⟨i, hi⟩ := by
   simp [executionTriples]
 
 /-- Scan all $n^6$ ordered triples in the fixed finite enumeration. -/

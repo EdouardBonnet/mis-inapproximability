@@ -9,11 +9,10 @@ title: Executable graph encodings and triangle-free approximation
 type: definition
 ---
 Graphs are finite Boolean adjacency matrices with symmetry and looplessness
-certificates.  Their machine encoding is the unary vertex count followed by
-the complete row-major matrix.  An approximation is a binary Turing program;
-its returned independent set is decoded from the program's actual output
-bits.  No Lean function supplies a separate semantic answer or a detached
-running-time annotation.
+certificates.  Their machine word is the vertex count followed by the complete
+row-major matrix, with Booleans encoded by $0$ and $1$.  An approximation is a
+function certified polynomial-time by the Lax51 finite-Turing model; its
+returned independent set is decoded from that certified function.
 -/
 
 set_option autoImplicit false
@@ -47,28 +46,15 @@ def GraphCode.graph {n : ℕ} (code : GraphCode n) : SimpleGraph (Fin n) where
     code.graph.Adj left right ↔ code.adjacent left right = true :=
   Iff.rfl
 
-/-- Unary length followed by the row-major adjacency matrix. -/
+/-- Vertex count followed by the row-major adjacency matrix. -/
 def GraphCode.bits {n : ℕ} (code : GraphCode n) : BitString :=
-  List.replicate n true ++ false ::
-    (List.ofFn fun left : Fin n ↦
-      List.ofFn fun right : Fin n ↦ code.adjacent left right).flatten
+  n :: List.ofFn fun rank : Fin (n * n) ↦
+    let vertex := finProdFinEquiv.symm rank
+    bitWord (code.adjacent vertex.1 vertex.2)
 
 lemma GraphCode.bits_length {n : ℕ} (code : GraphCode n) :
-    code.bits.length = n + 1 + n * n := by
-  have hrows :
-      List.map List.length
-          (List.ofFn fun left : Fin n ↦
-            List.ofFn fun right : Fin n ↦ code.adjacent left right) =
-        List.replicate n n := by
-    rw [List.map_ofFn]
-    rw [← List.ofFn_const]
-    congr 1
-    funext left
-    simp
-  unfold GraphCode.bits
-  rw [List.length_append, List.length_replicate, List.length_cons,
-    List.length_flatten, hrows, List.sum_replicate]
-  simp [Nat.add_comm, Nat.add_left_comm]
+    code.bits.length = 1 + n * n := by
+  simp [GraphCode.bits, Nat.add_comm]
 
 /-- The edgeless executable graph. -/
 def GraphCode.empty (n : ℕ) : GraphCode n where
@@ -78,7 +64,7 @@ def GraphCode.empty (n : ℕ) : GraphCode n where
 
 /-- Decode the first $n$ output bits as a vertex set. -/
 def decodeVertexSet (n : ℕ) (bits : BitString) : Finset (Fin n) :=
-  Finset.univ.filter fun vertex ↦ bits[vertex.1]? = some true
+  Finset.univ.filter fun vertex ↦ bits[vertex.1]? = some 1
 
 /-- A polynomial-time executable approximation for triangle-free Max Independent Set. -/
 structure TriangleFreeMISApproximation (ε : ℝ) where

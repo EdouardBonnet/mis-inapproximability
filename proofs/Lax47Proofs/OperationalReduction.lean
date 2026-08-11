@@ -481,8 +481,9 @@ lemma findExecutionViolation_steps_le {n : ℕ} (input : GraphCode n)
     (seed : ExecutionSeed n) (counts : EdgeVariable n → ℕ) :
     (findExecutionViolation input seed counts).2 ≤
       executionTestSteps n * n ^ 6 + 1 := by
-  simpa [findExecutionViolation] using
-    scanExecutionTriples_steps_le input seed counts (executionTriples n)
+  have h := scanExecutionTriples_steps_le input seed counts (executionTriples n)
+  simpa only [findExecutionViolation, executionTriples_length,
+    show (n * n) * (n * n) * (n * n) = n ^ 6 by ring] using h
 
 lemma executeRounds_steps_le {n : ℕ} (input : GraphCode n)
     (seed : ExecutionSeed n) (rounds : ℕ) (counts : EdgeVariable n → ℕ) :

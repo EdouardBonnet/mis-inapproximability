@@ -1,110 +1,60 @@
-import Mathlib.Computability.TuringMachine.Computable
+import Lax51.TuringPolytime
 
 /-!
 ---
-title: An operational machine model for polynomial-time computation
+title: Polynomial-time computation on the Lax51 finite-Turing model
 type: definition
 ---
-Computations are finite multi-stack Turing machines over binary input and
-output alphabets. A run is evaluated by the recursive bounded interpreter
-below. One unit of time is one transition of the fixed finite machine, and a
-polynomial-time program must prove that this interpreter reaches a halted
-configuration within $c(n+1)^k$ transitions on every input of length $n$.
+All algorithms in this submission compute total functions on finite words of
+natural numbers.  Polynomial time is exactly Lax51's predicate: a fixed
+finite multi-stack Turing machine transforms the canonical binary encoding of
+the input word into the canonical binary encoding of its output within a
+polynomial number of transitions.
 
-In particular, programs do not contain arbitrary Lean functions describing
-their answers, and time bounds are not annotations detached from evaluation.
-The semantic output function used below extracts the result returned by that
-bounded interpreter. Randomized algorithms receive a finite list of uniformly
-random input bits.
+In particular, a program's semantic function is tied to an actual finite
+Turing machine by $TuringPolytime$.  Randomized algorithms receive a finite
+list of independent uniform bits, represented by the words $0$ and $1$.
 -/
 
 set_option autoImplicit false
 
 namespace Lax47.Machine
 
-/-- A finite binary input, output, certificate, or random seed. -/
-abbrev BitString := List Bool
+open Lax51.TuringPolytime
 
-/-- A finite machine whose designated input and output alphabets are binary. -/
-abbrev BitMachine := Turing.TM2ComputableAux Bool Bool
+/-- A finite machine word.  Boolean data use the entries $0$ and $1$. -/
+abbrev BitString := List ℕ
 
-/--
-Run at most the supplied number of transitions, returning the first halted
-configuration and returning no result if the fuel is exhausted first.
--/
-def runConfigWithin (tm : Turing.FinTM2) :
-    (fuel : ℕ) → tm.Cfg → Option tm.Cfg
-  | 0, cfg =>
-      match cfg.l with
-      | none => some cfg
-      | some _ => none
-  | fuel + 1, cfg =>
-      match cfg.l with
-      | none => some cfg
-      | some _ =>
-          match tm.step cfg with
-          | none => none
-          | some next => runConfigWithin tm fuel next
-
-/-- The binary output produced by a machine within the supplied fuel. -/
-def evalWithin (machine : BitMachine) (fuel : ℕ)
-    (input : BitString) : Option BitString :=
-  match runConfigWithin machine.tm fuel
-      (Turing.initList machine.tm
-        (input.map machine.inputAlphabet.invFun)) with
-  | none => none
-  | some cfg => some ((cfg.stk machine.tm.k₁).map machine.outputAlphabet)
-
-/-- The convenient monomial polynomial bound $c(n+1)^k$. -/
+/-- The convenient monomial bound $c(n+1)^k$. -/
 def polynomialBound (c k n : ℕ) : ℕ :=
   c * (n + 1) ^ k
 
-/-- A binary Turing program whose actual bounded evaluation always halts. -/
+/-- A total word function computed in polynomial time by a finite Turing machine. -/
 structure PolytimeProgram where
-  machine : BitMachine
-  timeConstant : ℕ
-  timeExponent : ℕ
-  timeConstant_pos : 0 < timeConstant
-  terminates : ∀ input : BitString,
-    ∃ output, evalWithin machine
-      (polynomialBound timeConstant timeExponent input.length) input = some output
+  function : BitString → BitString
+  polytime : TuringPolytime function
 
-/-- The certified bounded evaluation returns a result. -/
-theorem PolytimeProgram.output_isSome (program : PolytimeProgram)
-    (input : BitString) :
-    (evalWithin program.machine
-      (polynomialBound program.timeConstant program.timeExponent input.length)
-      input).isSome :=
-  Option.isSome_iff_exists.2 (program.terminates input)
-
-/-- The executable output obtained from the certified bounded machine run. -/
+/-- The semantic output certified by the program's finite Turing machine. -/
 def PolytimeProgram.output (program : PolytimeProgram)
     (input : BitString) : BitString :=
-  (evalWithin program.machine
-    (polynomialBound program.timeConstant program.timeExponent input.length)
-    input).get (program.output_isSome input)
+  program.function input
 
-/-- The extracted output is produced by the operational evaluator. -/
-theorem PolytimeProgram.output_spec (program : PolytimeProgram)
-    (input : BitString) :
-    evalWithin program.machine
-      (polynomialBound program.timeConstant program.timeExponent input.length) input =
-        some (program.output input) := by
-  simpa only [PolytimeProgram.output] using
-    Option.eq_some_of_isSome (program.output_isSome input)
-
-/-- A self-delimiting pairing of two binary strings. -/
+/-- A length-prefixed pairing of two finite words. -/
 def pairBits (left right : BitString) : BitString :=
-  List.replicate left.length true ++ false :: left ++ right
+  left.length :: left ++ right
 
 /-- A uniformly random string of exactly $r$ bits. -/
 abbrev RandomSeed (r : ℕ) := Fin r → Bool
 
-/-- The list representation of a fixed-length random seed. -/
-def RandomSeed.bits {r : ℕ} (seed : RandomSeed r) : BitString :=
-  List.ofFn seed
+/-- Encode one Boolean as a natural-number word. -/
+def bitWord (bit : Bool) : ℕ :=
+  if bit then 1 else 0
 
-/-- A decision problem over finite binary inputs. -/
+/-- The word representation of a fixed-length random seed. -/
+def RandomSeed.bits {r : ℕ} (seed : RandomSeed r) : BitString :=
+  (List.ofFn seed).map bitWord
+
+/-- A decision problem over finite words. -/
 abbrev Language := Set BitString
 
 /-- A polynomial-time verifier with polynomially bounded certificates. -/
@@ -117,9 +67,9 @@ structure NPVerifier (language : Language) where
     input ∈ language ↔ ∃ certificate : BitString,
       certificate.length ≤ polynomialBound
         certificateConstant certificateExponent input.length ∧
-      program.output (pairBits input certificate) = [true]
+      program.output (pairBits input certificate) = [1]
 
-/-- Membership in $NP$ in the operational binary-machine model. -/
+/-- Membership in $NP$ in the Lax51 finite-Turing model. -/
 def InNP (language : Language) : Prop :=
   Nonempty (NPVerifier language)
 
@@ -134,11 +84,11 @@ structure BPPAlgorithm (language : Language) where
       randomnessConstant randomnessExponent input.length
     let seeds : Finset (RandomSeed randomBitCount) := Finset.univ
     let accepting := seeds.filter fun seed ↦
-      program.output (pairBits input seed.bits) = [true]
+      program.output (pairBits input seed.bits) = [1]
     (input ∈ language → 2 * seeds.card ≤ 3 * accepting.card) ∧
       (input ∉ language → 3 * accepting.card ≤ seeds.card)
 
-/-- Membership in $BPP$ in the same operational binary-machine model. -/
+/-- Membership in $BPP$ in the same finite-Turing model. -/
 def InBPP (language : Language) : Prop :=
   Nonempty (BPPAlgorithm language)
 
