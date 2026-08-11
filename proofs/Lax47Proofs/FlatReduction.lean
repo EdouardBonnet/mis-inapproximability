@@ -165,8 +165,8 @@ def flatRandomBitCount (n : ℕ) : ℕ :=
 abbrev FlatExecutionSeed (n : ℕ) := RandomSeed (flatRandomBitCount n)
 
 /-- A paired well-formed graph word recovers its advertised order. -/
-lemma rawOrder_pairBits {n : ℕ} (input : GraphCode n)
-    (seed : FlatExecutionSeed n) :
+lemma rawOrder_pairBits {n r : ℕ} (input : GraphCode n)
+    (seed : RandomSeed r) :
     rawOrder (pairBits input.bits seed.bits) = n := by
   unfold rawOrder pairBits
   have hget :
@@ -192,8 +192,8 @@ lemma RandomSeed.bits_getD {r : ℕ} (seed : RandomSeed r)
   · simp
 
 /-- A well-formed paired word decodes to its original graph. -/
-lemma rawGraphCodeAt_pairBits {n : ℕ} (input : GraphCode n)
-    (seed : FlatExecutionSeed n) :
+lemma rawGraphCodeAt_pairBits {n r : ℕ} (input : GraphCode n)
+    (seed : RandomSeed r) :
     rawGraphCodeAt n (pairBits input.bits seed.bits) = input := by
   rw [GraphCode.mk.injEq]
   funext left right
@@ -546,5 +546,123 @@ lemma flatRandomBitCount_polynomial (n : ℕ) :
     _ ≤ 1400 * (n + 1) ^ 12 := by
       have hbase : 1 ≤ n + 1 := by omega
       nlinarith [pow_le_pow_right₀ hbase (by omega : 11 ≤ 12)]
+
+/-! ### Uniform monomial padding for the Håstad-gap interface -/
+
+/-- The exact fixed monomial tape length exposed by the gap program. -/
+abbrev PolynomialExecutionSeed (n : ℕ) :=
+  RandomSeed (polynomialBound 1400 12 n)
+
+/-- Embed the reduction's used flat tape into its fixed polynomial padding. -/
+def flatToPolynomialEmbedding (n : ℕ) :
+    Fin (flatRandomBitCount n) ↪ Fin (polynomialBound 1400 12 n) where
+  toFun index := ⟨index.1, index.2.trans_le (by
+    simpa [polynomialBound] using flatRandomBitCount_polynomial n)⟩
+  inj' := by
+    intro left right equality
+    apply Fin.ext
+    exact Fin.mk.inj equality
+
+/-- Discard the uniform padding and retain the prefix read by the reduction. -/
+def flatSeedOfPolynomial {n : ℕ} (seed : PolynomialExecutionSeed n) :
+    FlatExecutionSeed n :=
+  fun index ↦ seed (flatToPolynomialEmbedding n index)
+
+@[simp] lemma flatSeedOfPolynomial_apply {n : ℕ}
+    (seed : PolynomialExecutionSeed n) (index : Fin (flatRandomBitCount n)) :
+    flatSeedOfPolynomial seed index =
+      seed (flatToPolynomialEmbedding n index) :=
+  rfl
+
+/-- Pairing a graph with the fixed polynomial tape recovers its used prefix. -/
+lemma rawFlatSeedAt_pairBits_polynomial {n : ℕ} (input : GraphCode n)
+    (seed : PolynomialExecutionSeed n) :
+    rawFlatSeedAt n (pairBits input.bits seed.bits) =
+      flatSeedOfPolynomial seed := by
+  funext index
+  unfold rawFlatSeedAt rawBit pairBits
+  have hget :
+      (input.bits.length :: input.bits ++ seed.bits).getD
+          (2 + n * n + index.1) 0 =
+        (input.bits ++ seed.bits).getD (1 + n * n + index.1) 0 := by
+    rw [show 2 + n * n + index.1 =
+      (1 + n * n + index.1) + 1 by omega]
+    exact List.getD_cons_succ
+  rw [hget]
+  rw [List.getD_append_right]
+  · rw [GraphCode.bits_length]
+    simp only [Nat.add_sub_cancel_left]
+    change decide
+        (seed.bits.getD (flatToPolynomialEmbedding n index).1 0 = 1) =
+      seed (flatToPolynomialEmbedding n index)
+    rw [RandomSeed.bits_getD]
+    cases seed (flatToPolynomialEmbedding n index) <;> rfl
+  · rw [GraphCode.bits_length]
+    omega
+
+/-- A polynomially padded Boolean family splits into its prefix and unused bits. -/
+noncomputable def polynomialSeedSplitEquiv (n : ℕ) :
+    PolynomialExecutionSeed n ≃
+      FlatExecutionSeed n ×
+        (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) :=
+  splitBooleanFamilyEquiv (flatToPolynomialEmbedding n)
+
+@[simp] lemma polynomialSeedSplitEquiv_fst (n : ℕ)
+    (seed : PolynomialExecutionSeed n) :
+    (polynomialSeedSplitEquiv n seed).1 = flatSeedOfPolynomial seed := by
+  classical
+  funext index
+  change (splitBooleanFamilyEquiv (flatToPolynomialEmbedding n) seed).1 index =
+    seed (flatToPolynomialEmbedding n index)
+  rw [splitBooleanFamilyEquiv_fst]
+
+lemma polynomial_filter_card (n : ℕ)
+    (predicate : FlatExecutionSeed n → Prop) [DecidablePred predicate] :
+    ((Finset.univ : Finset (PolynomialExecutionSeed n)).filter
+        (fun seed ↦ predicate (flatSeedOfPolynomial seed))).card =
+      ((Finset.univ : Finset (FlatExecutionSeed n)).filter predicate).card *
+        Fintype.card
+          (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) := by
+  classical
+  have hsplit := filter_card_equiv (polynomialSeedSplitEquiv n)
+    (fun pair : FlatExecutionSeed n ×
+      (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) ↦
+        predicate pair.1)
+  rw [filter_product_fst_card] at hsplit
+  simpa only [polynomialSeedSplitEquiv_fst] using hsplit
+
+lemma card_polynomialExecutionSeed (n : ℕ) :
+    Fintype.card (PolynomialExecutionSeed n) =
+      Fintype.card (FlatExecutionSeed n) *
+        Fintype.card
+          (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) := by
+  classical
+  simpa only [Fintype.card_prod] using
+    Fintype.card_congr (polynomialSeedSplitEquiv n)
+
+/-- A one-third bound is unchanged by the exact uniform monomial padding. -/
+lemma polynomial_failure_card_le_third (n : ℕ)
+    (predicate : FlatExecutionSeed n → Prop) [DecidablePred predicate]
+    (hfailure : 3 * ((Finset.univ : Finset (FlatExecutionSeed n)).filter
+      predicate).card ≤ (Finset.univ : Finset (FlatExecutionSeed n)).card) :
+    3 * ((Finset.univ : Finset (PolynomialExecutionSeed n)).filter
+        (fun seed ↦ predicate (flatSeedOfPolynomial seed))).card ≤
+      (Finset.univ : Finset (PolynomialExecutionSeed n)).card := by
+  classical
+  rw [polynomial_filter_card, Finset.card_univ,
+    card_polynomialExecutionSeed]
+  rw [Finset.card_univ] at hfailure
+  calc
+    3 * (((Finset.univ : Finset (FlatExecutionSeed n)).filter predicate).card *
+          Fintype.card
+            (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool)) =
+        (3 * ((Finset.univ : Finset (FlatExecutionSeed n)).filter
+          predicate).card) *
+          Fintype.card
+            (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) := by ring
+    _ ≤ Fintype.card (FlatExecutionSeed n) *
+          Fintype.card
+            (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) :=
+      Nat.mul_le_mul_right _ hfailure
 
 end Lax47Proofs.FlatReduction

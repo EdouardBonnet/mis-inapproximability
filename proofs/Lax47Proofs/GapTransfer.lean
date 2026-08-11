@@ -710,32 +710,38 @@ noncomputable def machineGapPolytimeProgram (q : ℕ) {ε : ℝ}
 noncomputable def machineGapProgram (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) : GapProgram q where
   program := machineGapPolytimeProgram q algorithm
-  randomBitCount := flatRandomBitCount
+  randomnessConstant := 1400
+  randomnessExponent := 12
+  randomnessConstant_pos := by norm_num
 
 lemma machineGapProgram_accepts_iff {q : ℕ} (hq : 0 < q) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) (hn : 0 < n)
-    (input : GraphCode n) (seed : FlatExecutionSeed n) :
+    (input : GraphCode n) (seed : PolynomialExecutionSeed n) :
     (machineGapProgram q algorithm).accepts n input seed = true ↔
       realGapThreshold q n ≤
         (algorithm.output
-          (executionOutput input (executionSeedOfFlat seed))).card := by
+          (executionOutput input
+            (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card := by
   have outputEq :
       gapFunction q algorithm (pairBits input.bits seed.bits) =
         (if n ^ (q + 3) ≤
             (algorithm.output
-              (executionOutput input (executionSeedOfFlat seed))).card ^ q
+              (executionOutput input
+                (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ^ q
           then [1] else [0]) := by
     unfold gapFunction
     rw [rawOrder_pairBits input seed]
     simp only [show n ≠ 0 by omega, ↓reduceIte]
-    rw [rawGraphCodeAt_pairBits input seed, rawFlatSeedAt_pairBits input seed]
+    rw [rawGraphCodeAt_pairBits input seed,
+      rawFlatSeedAt_pairBits_polynomial input seed]
     rfl
   change decide
       (gapFunction q algorithm (pairBits input.bits seed.bits) = [1]) = true ↔ _
   rw [outputEq, ← naturalGapThreshold_iff hq]
   by_cases threshold : n ^ (q + 3) ≤
       (algorithm.output
-        (executionOutput input (executionSeedOfFlat seed))).card ^ q
+        (executionOutput input
+          (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ^ q
   <;> simp [threshold]
 
 theorem machineGapProgram_completeness (q : ℕ) (hq : 0 < q) {ε : ℝ}
@@ -754,7 +760,7 @@ theorem machineGapProgram_completeness (q : ℕ) (hq : 0 < q) {ε : ℝ}
     apply (machineGapProgram_accepts_iff hq algorithm n (by omega)
       input seed).2
     exact high_output_card algorithm hqε n hn input
-      (executionSeedOfFlat seed) hhigh
+      (executionSeedOfFlat (flatSeedOfPolynomial seed)) hhigh
   have hfilter :
       (program.seeds n).filter (fun seed ↦ program.accepts n input seed) =
         program.seeds n := Finset.filter_eq_self.2 hall
@@ -764,6 +770,7 @@ theorem machineGapProgram_completeness (q : ℕ) (hq : 0 < q) {ε : ℝ}
   rw [hfilter]
   omega
 
+set_option maxRecDepth 100000 in
 theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) (hn : 3 ≤ n)
     (input : GraphCode n)
@@ -776,9 +783,9 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
   let predicate : ExecutionSeed n → Prop := fun structuredSeed ↦
     40000 * input.graph.indepNum * n * Real.log n <
       ((executionOutput input structuredSeed).graph.indepNum : ℝ)
-  let failures : Finset (FlatExecutionSeed n) :=
-    (Finset.univ : Finset (FlatExecutionSeed n)).filter fun seed ↦
-      predicate (executionSeedOfFlat seed)
+  let failures : Finset (PolynomialExecutionSeed n) :=
+    (Finset.univ : Finset (PolynomialExecutionSeed n)).filter fun seed ↦
+      predicate (executionSeedOfFlat (flatSeedOfPolynomial seed))
   have hsubset : program.acceptingSeeds n input ⊆ failures := by
     intro seed hseed
     have haccepts : program.accepts n input seed = true := by
@@ -786,7 +793,8 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
         GapProgram.seeds, Finset.mem_univ, true_and] using hseed
     have hacceptsReal : realGapThreshold q n ≤
         (algorithm.output
-          (executionOutput input (executionSeedOfFlat seed))).card :=
+          (executionOutput input
+            (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card :=
       (machineGapProgram_accepts_iff hq algorithm n (by omega)
         input seed).1 haccepts
     have hthreshold :
@@ -794,37 +802,37 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
           realGapThreshold q n :=
       low_soundness_threshold 40000 q n (by norm_num) hn input hlow hlog
     have hindependent := algorithm.independent
-      (executionOutput input (executionSeedOfFlat seed))
+      (executionOutput input
+        (executionSeedOfFlat (flatSeedOfPolynomial seed)))
       (executionOutput_triangleFree_of_executionSeed input
-        (executionSeedOfFlat seed))
+        (executionSeedOfFlat (flatSeedOfPolynomial seed)))
     have hcard :
         (algorithm.output
-          (executionOutput input (executionSeedOfFlat seed))).card ≤
-        (executionOutput input (executionSeedOfFlat seed)).graph.indepNum :=
+          (executionOutput input
+            (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ≤
+        (executionOutput input
+          (executionSeedOfFlat (flatSeedOfPolynomial seed))).graph.indepNum :=
       hindependent.card_le_indepNum
     have hcardReal :
         ((algorithm.output
-          (executionOutput input (executionSeedOfFlat seed))).card : ℝ) ≤
-        (executionOutput input (executionSeedOfFlat seed)).graph.indepNum := by
+          (executionOutput input
+            (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card : ℝ) ≤
+        (executionOutput input
+          (executionSeedOfFlat (flatSeedOfPolynomial seed))).graph.indepNum := by
       exact_mod_cast hcard
     have hfailure := hthreshold.trans_le (hacceptsReal.trans hcardReal)
     exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hfailure⟩
   have structuredFailure :=
     executionSeed_soundness_failure_card_le_third n hn input
   have flatFailure := flat_failure_card_le_third n predicate structuredFailure
+  have polynomialFailure := polynomial_failure_card_le_third n
+    (fun seed ↦ predicate (executionSeedOfFlat seed)) flatFailure
   calc
     3 * (program.acceptingSeeds n input).card ≤ 3 * failures.card :=
       Nat.mul_le_mul_left 3 (Finset.card_le_card hsubset)
     _ ≤ (program.seeds n).card := by
       simpa only [program, machineGapProgram, failures, predicate,
-        GapProgram.seeds, Finset.card_univ] using flatFailure
-
-lemma machineGapProgram_randomBitCount_polynomial (q : ℕ) {ε : ℝ}
-    (algorithm : TriangleFreeMISApproximation ε) (n : ℕ) :
-    (machineGapProgram q algorithm).randomBitCount n ≤
-      polynomialBound 1400 12 n := by
-  simpa [machineGapProgram, polynomialBound] using
-    flatRandomBitCount_polynomial n
+        GapProgram.seeds, Finset.card_univ] using polynomialFailure
 
 /-- A cutoff after which the logarithmic loss fits below $n^{2/q}$. -/
 noncomputable def gapCutoff (q : ℕ) (hq : 0 < q) : ℕ :=
@@ -845,10 +853,6 @@ noncomputable def gapSolver (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) (hq : 3 ≤ q)
     (hqε : 2 * (q : ℝ)⁻¹ ≤ ε) : MISGapSolver q where
   program := machineGapProgram q algorithm
-  randomnessConstant := 1400
-  randomnessExponent := 12
-  randomnessConstant_pos := by norm_num
-  randomnessBound := machineGapProgram_randomBitCount_polynomial q algorithm
   cutoff := gapCutoff q (by omega)
   completeness := by
     intro n hn input hhigh

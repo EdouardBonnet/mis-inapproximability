@@ -6,8 +6,8 @@ title: Finite-Turing promise-gap algorithms for Max Independent Set
 type: definition
 ---
 The Håstad premise is stated only for functions certified by Lax51's genuine
-finite-Turing polynomial-time predicate.  A randomized program receives a
-polynomially bounded finite list of uniform bits as part of its input word.
+finite-Turing polynomial-time predicate.  A randomized program fixes constants
+$c,k$ and receives exactly $c(n+1)^k$ uniform bits on an $n$-vertex input.
 There is no special constructor for the reduction and no detached step
 annotation.  For an integer $q>2$, the high promise is
 $n^{1-1/q}\leq\alpha(H)$, the low promise is
@@ -51,10 +51,16 @@ def gapDecision (q n outputCard : ℕ) : Bool × ℕ :=
 
 /- ### Standard randomized finite-Turing programs -/
 
-/-- A polynomial-time finite-Turing program with a size-dependent random tape. -/
+/-- A polynomial-time finite-Turing program with one fixed monomial tape bound. -/
 structure GapProgram (q : ℕ) where
   program : PolytimeProgram
-  randomBitCount : ℕ → ℕ
+  randomnessConstant : ℕ
+  randomnessExponent : ℕ
+  randomnessConstant_pos : 0 < randomnessConstant
+
+/-- The exact, uniformly specified random-tape length on order $n$. -/
+def GapProgram.randomBitCount {q : ℕ} (program : GapProgram q) (n : ℕ) : ℕ :=
+  polynomialBound program.randomnessConstant program.randomnessExponent n
 
 /-- Finite uniform seed type read by a gap program on an $n$-vertex graph. -/
 abbrev GapProgram.Seed {q : ℕ} (program : GapProgram q) (n : ℕ) :=
@@ -79,16 +85,11 @@ def GapProgram.acceptingSeeds {q : ℕ} (program : GapProgram q)
 
 /--
 A bounded-error finite-Turing polynomial-time solver for Håstad's rational
-promise gap.  The only separate resource is the number of uniform input bits,
-which is polynomially bounded below.
+promise gap. The uniform random-tape length is the fixed monomial stored in
+the gap program.
 -/
 structure MISGapSolver (q : ℕ) where
   program : GapProgram q
-  randomnessConstant : ℕ
-  randomnessExponent : ℕ
-  randomnessConstant_pos : 0 < randomnessConstant
-  randomnessBound : ∀ n : ℕ, program.randomBitCount n ≤
-    polynomialBound randomnessConstant randomnessExponent n
   cutoff : ℕ
   completeness : ∀ (n : ℕ), cutoff ≤ n → ∀ input : GraphCode n,
     Real.rpow n (1 - (q : ℝ)⁻¹) ≤ (input.graph.indepNum : ℝ) →
