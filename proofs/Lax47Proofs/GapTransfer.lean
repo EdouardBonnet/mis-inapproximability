@@ -6,7 +6,8 @@ set_option autoImplicit false
 
 namespace Lax47Proofs.GapTransfer
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction Lax47.Gap
+open Lax47.Machine Lax47.Complexity Lax47.Gap
+open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
 open Lax47Proofs.OperationalReduction Lax47Proofs.FlatReduction
 open Lax47Proofs.GapMachine
@@ -243,9 +244,9 @@ lemma high_output_card {q : ℕ} {ε : ℝ}
     (hhigh : Real.rpow n (1 - (q : ℝ)⁻¹) ≤
       (input.graph.indepNum : ℝ)) :
     realGapThreshold q n ≤
-      (algorithm.output (executionOutput input seed)).card := by
+      (approximationOutput algorithm (executionOutput input seed)).card := by
   let graph := executionOutput input seed
-  let set := algorithm.output graph
+  let set := approximationOutput algorithm graph
   let factor := Real.rpow (n * n) ((1 : ℝ) / 2 - ε)
   have hnposNat : 0 < n := lt_of_lt_of_le Nat.zero_lt_one hn
   have hnpos : (0 : ℝ) < n := by exact_mod_cast hnposNat
@@ -292,7 +293,7 @@ lemma high_output_card {q : ℕ} {ε : ℝ}
     exact_mod_cast executionOutput_completeness_of_executionSeed input seed
   have hApproximation : (graph.graph.indepNum : ℝ) ≤ factor * set.card := by
     simpa only [graph, set, factor, Nat.cast_mul] using
-      algorithm.approximation graph
+      approximationOutput_approximation algorithm graph
         (executionOutput_triangleFree_of_executionSeed input seed)
   have hProduct : factor * realGapThreshold q n ≤ factor * set.card :=
     hPower.trans (hHighPower.trans (hComplete.trans hApproximation))
@@ -390,7 +391,7 @@ lemma executionOutput_bits_length_add_one_le {n : ℕ}
       (n * n) * (n * n) = n ^ 4 := by ring
       _ ≤ (n + 1) ^ 4 := pow_le_pow_left' hn _
   have hone : 1 ≤ (n + 1) ^ 4 := Nat.one_le_pow _ _ hbase
-  rw [GraphCode.bits_length]
+  rw [graphCode_bits_length]
   omega
 
 lemma approximation_fuel_polynomial {ε : ℝ}
@@ -417,9 +418,9 @@ lemma approximation_fuel_polynomial {ε : ℝ}
 lemma approximation_output_card_le {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) {n : ℕ}
     (input : GraphCode n) (seed : ExecutionSeed n) :
-    (algorithm.output (executionOutput input seed)).card ≤ n * n := by
+    (approximationOutput algorithm (executionOutput input seed)).card ≤ n * n := by
   simpa using Finset.card_le_card
-    (Finset.subset_univ (algorithm.output (executionOutput input seed)))
+    (Finset.subset_univ (approximationOutput algorithm (executionOutput input seed)))
 
 lemma decoding_steps_polynomial (n : ℕ) :
     (n * n + 1) ^ 2 ≤ 4 * (n + 1) ^ 4 := by
@@ -438,10 +439,10 @@ lemma triangle_gapDecision_steps_polynomial (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) {n : ℕ}
     (input : GraphCode n) (seed : ExecutionSeed n) :
     (gapDecision q n
-        (algorithm.output (executionOutput input seed)).card).2 ≤
+        (approximationOutput algorithm (executionOutput input seed)).card).2 ≤
       (10 * (q + 4) * 4 ^ (q + 5)) *
         (n + 1) ^ (2 * (q + 5)) := by
-  let outputCard := (algorithm.output (executionOutput input seed)).card
+  let outputCard := (approximationOutput algorithm (executionOutput input seed)).card
   let x := n + 1
   have hx : 1 ≤ x := by omega
   have hcard : outputCard ≤ n * n :=
@@ -524,7 +525,7 @@ theorem triangleProgram_steps_polynomial (q : ℕ) {ε : ℝ}
     (decoding_steps_polynomial n).trans (by
       exact Nat.mul_le_mul_left 4 (pow_le_pow_right' hx h4smallK))
   have hdecision : (gapDecision q n
-      (algorithm.output (executionOutput input seed)).card).2 ≤
+      (approximationOutput algorithm (executionOutput input seed)).card).2 ≤
       decisionConstant * x ^ K :=
     (triangle_gapDecision_steps_polynomial q algorithm input seed).trans (by
       simpa only [decisionConstant] using
@@ -537,7 +538,7 @@ theorem triangleProgram_steps_polynomial (q : ℕ) {ε : ℝ}
         algorithm.program.timeExponent (executionOutput input seed).bits.length +
       (n * n + 1) ^ 2 +
       (gapDecision q n
-        (algorithm.output (executionOutput input seed)).card).2 ≤
+        (approximationOutput algorithm (executionOutput input seed)).card).2 ≤
     triangleTimeConstant q algorithm * x ^ K
   calc
     executionSteps input seed +
@@ -545,7 +546,7 @@ theorem triangleProgram_steps_polynomial (q : ℕ) {ε : ℝ}
             algorithm.program.timeExponent (executionOutput input seed).bits.length +
           (n * n + 1) ^ 2 +
           (gapDecision q n
-            (algorithm.output (executionOutput input seed)).card).2 ≤
+            (approximationOutput algorithm (executionOutput input seed)).card).2 ≤
         400000 * x ^ K + approximationConstant * x ^ K +
           4 * x ^ K + decisionConstant * x ^ K := by omega
     _ = triangleTimeConstant q algorithm * x ^ K := by
@@ -574,9 +575,9 @@ lemma triangleProgram_accepts_iff {q : ℕ} (hq : 0 < q) {ε : ℝ}
     (GapProgram.triangleReduction ε algorithm : GapProgram q).accepts
         n input seed = true ↔
       realGapThreshold q n ≤
-        (algorithm.output (executionOutput input seed)).card := by
+        (approximationOutput algorithm (executionOutput input seed)).card := by
   change (gapDecision q n
-    (algorithm.output (executionOutput input seed)).card).1 = true ↔ _
+    (approximationOutput algorithm (executionOutput input seed)).card).1 = true ↔ _
   rw [gapDecision_value, naturalGapThreshold_iff hq]
 
 theorem triangleProgram_completeness (q : ℕ) (hq : 0 < q) {ε : ℝ}
@@ -624,19 +625,19 @@ theorem triangleProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
       simpa only [GapProgram.acceptingSeeds, Finset.mem_filter,
         GapProgram.seeds, Finset.mem_univ, true_and] using hseed
     have hacceptsReal : realGapThreshold q n ≤
-        (algorithm.output (executionOutput input seed)).card :=
+        (approximationOutput algorithm (executionOutput input seed)).card :=
       (triangleProgram_accepts_iff hq algorithm n input seed).1 haccepts
     have hthreshold :
         40000 * input.graph.indepNum * n * Real.log n <
           realGapThreshold q n :=
       low_soundness_threshold 40000 q n (by norm_num) hn input hlow hlog
-    have hindependent := algorithm.independent (executionOutput input seed)
+    have hindependent := approximationOutput_independent algorithm (executionOutput input seed)
       (executionOutput_triangleFree_of_executionSeed input seed)
-    have hcard : (algorithm.output (executionOutput input seed)).card ≤
+    have hcard : (approximationOutput algorithm (executionOutput input seed)).card ≤
         (executionOutput input seed).graph.indepNum :=
       hindependent.card_le_indepNum
     have hcardReal :
-        ((algorithm.output (executionOutput input seed)).card : ℝ) ≤
+        ((approximationOutput algorithm (executionOutput input seed)).card : ℝ) ≤
           (executionOutput input seed).graph.indepNum := by
       exact_mod_cast hcard
     have hfailure := hthreshold.trans_le (hacceptsReal.trans hcardReal)
@@ -719,13 +720,13 @@ lemma machineGapProgram_accepts_iff {q : ℕ} (hq : 0 < q) {ε : ℝ}
     (input : GraphCode n) (seed : PolynomialExecutionSeed n) :
     (machineGapProgram q algorithm).accepts n input seed = true ↔
       realGapThreshold q n ≤
-        (algorithm.output
+        (approximationOutput algorithm
           (executionOutput input
             (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card := by
   have outputEq :
       gapFunction q algorithm (pairBits input.bits seed.bits) =
         (if n ^ (q + 3) ≤
-            (algorithm.output
+            (approximationOutput algorithm
               (executionOutput input
                 (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ^ q
           then [1] else [0]) := by
@@ -739,7 +740,7 @@ lemma machineGapProgram_accepts_iff {q : ℕ} (hq : 0 < q) {ε : ℝ}
       (gapFunction q algorithm (pairBits input.bits seed.bits) = [1]) = true ↔ _
   rw [outputEq, ← naturalGapThreshold_iff hq]
   by_cases threshold : n ^ (q + 3) ≤
-      (algorithm.output
+      (approximationOutput algorithm
         (executionOutput input
           (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ^ q
   <;> simp [threshold]
@@ -792,7 +793,7 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
       simpa only [GapProgram.acceptingSeeds, Finset.mem_filter,
         GapProgram.seeds, Finset.mem_univ, true_and] using hseed
     have hacceptsReal : realGapThreshold q n ≤
-        (algorithm.output
+        (approximationOutput algorithm
           (executionOutput input
             (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card :=
       (machineGapProgram_accepts_iff hq algorithm n (by omega)
@@ -801,20 +802,20 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
         40000 * input.graph.indepNum * n * Real.log n <
           realGapThreshold q n :=
       low_soundness_threshold 40000 q n (by norm_num) hn input hlow hlog
-    have hindependent := algorithm.independent
+    have hindependent := approximationOutput_independent algorithm
       (executionOutput input
         (executionSeedOfFlat (flatSeedOfPolynomial seed)))
       (executionOutput_triangleFree_of_executionSeed input
         (executionSeedOfFlat (flatSeedOfPolynomial seed)))
     have hcard :
-        (algorithm.output
+        (approximationOutput algorithm
           (executionOutput input
             (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card ≤
         (executionOutput input
           (executionSeedOfFlat (flatSeedOfPolynomial seed))).graph.indepNum :=
       hindependent.card_le_indepNum
     have hcardReal :
-        ((algorithm.output
+        ((approximationOutput algorithm
           (executionOutput input
             (executionSeedOfFlat (flatSeedOfPolynomial seed)))).card : ℝ) ≤
         (executionOutput input

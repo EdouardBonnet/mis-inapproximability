@@ -20,7 +20,7 @@ set_option autoImplicit false
 
 namespace Lax47Proofs.RamReduction
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
+open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction
 open Lax13Proofs.Imp
 open Lax13Proofs.Reasoning

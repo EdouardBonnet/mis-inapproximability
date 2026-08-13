@@ -15,7 +15,8 @@ set_option maxHeartbeats 2000000
 
 namespace Lax47Proofs.GapMachine
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction Lax47.Gap
+open Lax47.Machine Lax47.Complexity Lax47.Gap
+open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect

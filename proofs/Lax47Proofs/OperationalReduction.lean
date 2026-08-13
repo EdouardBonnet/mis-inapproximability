@@ -12,7 +12,7 @@ set_option autoImplicit false
 
 namespace Lax47Proofs.OperationalReduction
 
-open Lax47.Complexity Lax47.Reduction
+open Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax41.MoserTardosDefinitions
 open Lax41.HaeuplerSahaSrinivasanDefinitions
 open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
@@ -335,7 +335,7 @@ theorem executionOutput_comap_eq {n : ℕ} (input : GraphCode n)
     have hdecodeRight : decodeBlowupVertex (finProdFinEquiv right) = right :=
       finProdFinEquiv.symm_apply_apply right
     rw [truncatedGraph, if_pos hhalt, cutoffOutputGraph_adj_iff]
-    simp only [SimpleGraph.comap_adj, GraphCode.graph_adj, executionOutput,
+    simp only [SimpleGraph.comap_adj, graphCode_graph_adj, executionOutput,
       hexec, if_true, Bool.and_eq_true, decodeBlowupVertex_encode,
       executionCell_seedOfFinite, executionCounts_eq_runCounts, blowup,
       cutoffAssignment, currentAssignment]

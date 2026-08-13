@@ -20,6 +20,12 @@ rev = "05704ee2deb398d84129c1e2c3a961f29fec0bed"
 subDir = "proofs"
 
 [[require]]
+name = "Lax41"
+git = "https://github.com/EdouardBonnet/moser-tardos"
+rev = "05704ee2deb398d84129c1e2c3a961f29fec0bed"
+subDir = "concepts"
+
+[[require]]
 name = "Lax51Proofs"
 git = "https://github.com/szymtor/RAM-TM"
 rev = "4f6c21aae81fbe8d1233d3ae8358b82b110549b9"

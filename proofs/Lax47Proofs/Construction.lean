@@ -1,4 +1,4 @@
-import Lax47.Reduction
+import Lax47Proofs.Reduction
 import Lax41Proofs.MoserTardos
 import Lax41Proofs.HaeuplerSahaSrinivasanTheorem22
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
@@ -8,7 +8,7 @@ set_option autoImplicit false
 namespace Lax47Proofs.Construction
 
 open scoped ENNReal BigOperators
-open Lax47.Reduction
+open Lax47Proofs.Reduction
 open Lax41.MoserTardosDefinitions
 open Lax41.HaeuplerSahaSrinivasanDefinitions
 

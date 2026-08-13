@@ -8,6 +8,7 @@ import Lax47Proofs.GapMachineRun
 import Lax47Proofs.GapTransfer
 import Lax47Proofs.Main
 import Lax47Proofs.OperationalReduction
+import Lax47Proofs.ProofSupport
 import Lax47Proofs.RamReduction
 import Lax47Proofs.RamReductionCorrectness
 import Lax47Proofs.RamReductionCounter
@@ -18,3 +19,4 @@ import Lax47Proofs.RamReductionScan
 import Lax47Proofs.RamReductionSemantics
 import Lax47Proofs.RamReductionTriangle
 import Lax47Proofs.Redirect
+import Lax47Proofs.Reduction

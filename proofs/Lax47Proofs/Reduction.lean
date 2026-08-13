@@ -1,31 +1,13 @@
-import Lax47.Complexity
+import Lax47Proofs.ProofSupport
 import Lax41.MoserTardosDefinitions
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Probability.ProductMeasure
-
-/-!
----
-title: Finite-bit reduction to triangle-free Max Independent Set
-type: definition
----
-This concept defines the fixed randomized reduction used by the proof. An
-$n$-vertex graph is sent to a graph on the $n\times n$ blow-up of its vertices.
-The program receives one finite block of fair bits for every table cell that a
-polynomially truncated resampling loop can read. It scans the finite list of
-ordered vertex triples, resamples the three edges of the first present
-triangle, and stops after $12(n+1)^6$ rounds. If the final scan still finds a
-triangle, it emits the edgeless graph.
-
-The counter state and its operation count are returned by the same structural
-recursion. The mathematical infinite table used in the probability proof is
-not an input to this executable reduction.
--/
 
 set_option autoImplicit false
 
 open scoped ENNReal
 
-namespace Lax47.Reduction
+namespace Lax47Proofs.Reduction
 
 open Lax41.MoserTardosDefinitions
 open Lax47.Complexity
@@ -245,4 +227,4 @@ def executionSteps {n : ℕ} (input : GraphCode n)
     (findExecutionViolation input seed (executionCounts input seed)).2 +
     (n + 1) ^ 4
 
-end Lax47.Reduction
+end Lax47Proofs.Reduction

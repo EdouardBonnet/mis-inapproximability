@@ -10,12 +10,6 @@ git = "https://github.com/leanprover-community/mathlib4"
 rev = "c5ea00351c28e24afc9f0f84379aa41082b1188f"
 
 [[require]]
-name = "Lax41"
-git = "https://github.com/EdouardBonnet/moser-tardos"
-rev = "05704ee2deb398d84129c1e2c3a961f29fec0bed"
-subDir = "concepts"
-
-[[require]]
 name = "Lax51"
 git = "https://github.com/szymtor/RAM-TM"
 rev = "4f6c21aae81fbe8d1233d3ae8358b82b110549b9"

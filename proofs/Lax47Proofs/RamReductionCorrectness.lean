@@ -11,7 +11,7 @@ set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionCorrectness
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
+open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
 
@@ -278,7 +278,7 @@ lemma rawBit_pairBits_graph {n : ℕ} (input : GraphCode n)
         exact List.getD_cons_succ
       _ = input.bits.getD (1 + left.1 * n + right.1) 0 := by
         apply List.getD_append
-        rw [GraphCode.bits_length]
+        rw [graphCode_bits_length]
         nlinarith [left.2, right.2]
   rw [hget, GraphCode.bits_getD]
   cases input.adjacent left right <;> rfl

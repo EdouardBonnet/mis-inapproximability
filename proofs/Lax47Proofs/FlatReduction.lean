@@ -13,7 +13,7 @@ set_option autoImplicit false
 
 namespace Lax47Proofs.FlatReduction
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
+open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FiniteExecution Lax47Proofs.OperationalReduction
 
 /-! ### Total decoding of a machine input
@@ -177,7 +177,7 @@ lemma rawOrder_pairBits {n r : ℕ} (input : GraphCode n)
         (xs := input.bits ++ seed.bits) (n := 0) (d := 0))
   rw [hget]
   rw [List.getD_append input.bits seed.bits 0 0 (by
-    rw [GraphCode.bits_length]
+    rw [graphCode_bits_length]
     omega)]
   simp [GraphCode.bits]
   nlinarith
@@ -218,7 +218,7 @@ lemma rawGraphCodeAt_pairBits {n r : ℕ} (input : GraphCode n)
           exact List.getD_cons_succ
         _ = input.bits.getD (1 + a.1 * n + b.1) 0 := by
           apply List.getD_append
-          rw [GraphCode.bits_length]
+          rw [graphCode_bits_length]
           nlinarith [a.2, b.2]
     unfold rawBit
     rw [hget left right, hget right left,
@@ -300,11 +300,11 @@ lemma rawFlatSeedAt_pairBits {n : ℕ} (input : GraphCode n)
     exact List.getD_cons_succ
   rw [hget]
   rw [List.getD_append_right]
-  · rw [GraphCode.bits_length]
+  · rw [graphCode_bits_length]
     simp only [Nat.add_sub_cancel_left]
     rw [RandomSeed.bits_getD]
     cases seed index <;> rfl
-  · rw [GraphCode.bits_length]
+  · rw [graphCode_bits_length]
     omega
 
 /-- A machine word models a graph and flat random tape when the raw decoder
@@ -590,14 +590,14 @@ lemma rawFlatSeedAt_pairBits_polynomial {n : ℕ} (input : GraphCode n)
     exact List.getD_cons_succ
   rw [hget]
   rw [List.getD_append_right]
-  · rw [GraphCode.bits_length]
+  · rw [graphCode_bits_length]
     simp only [Nat.add_sub_cancel_left]
     change decide
         (seed.bits.getD (flatToPolynomialEmbedding n index).1 0 = 1) =
       seed (flatToPolynomialEmbedding n index)
     rw [RandomSeed.bits_getD]
     cases seed (flatToPolynomialEmbedding n index) <;> rfl
-  · rw [GraphCode.bits_length]
+  · rw [graphCode_bits_length]
     omega
 
 /-- A polynomially padded Boolean family splits into its prefix and unused bits. -/

@@ -10,7 +10,7 @@ set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
+open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
@@ -579,7 +579,7 @@ theorem outputLoopBody_spec (B : ℕ) {n : ℕ}
         rw [hzero]
         omega
   have htargetLength : target.bits.length = count + 1 := by
-    simpa [count, N, Nat.add_comm] using GraphCode.bits_length target
+    simpa [count, N, Nat.add_comm] using graphCode_bits_length target
   have hprefixLe : i + 1 ≤ target.bits.length := by
     rw [htargetLength]
     omega
@@ -725,7 +725,7 @@ theorem buildOutputGraph_spec (B : ℕ) {n : ℕ}
     exact hle.trans_lt hcountB
   have hzeroB : 0 < B := by omega
   have htargetLength : target.bits.length = count + 1 := by
-    simpa [target, count, Nat.add_comm] using GraphCode.bits_length target
+    simpa [target, count, Nat.add_comm] using graphCode_bits_length target
   have hbody :
       Spec B
         (fun state => OutputInvariant input graph flatSeed state ∧

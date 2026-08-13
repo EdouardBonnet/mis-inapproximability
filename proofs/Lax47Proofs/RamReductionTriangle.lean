@@ -10,7 +10,7 @@ set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
+open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen

@@ -15,7 +15,7 @@ set_option autoImplicit false
 namespace Lax47Proofs.FiniteExecution
 
 open scoped BigOperators ENNReal
-open Lax47.Reduction
+open Lax47Proofs.Reduction
 open Lax41.MoserTardosDefinitions
 open Lax47Proofs.Construction
 

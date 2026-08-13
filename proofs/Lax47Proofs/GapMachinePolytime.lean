@@ -11,7 +11,8 @@ set_option maxHeartbeats 4000000
 
 namespace Lax47Proofs.GapMachine
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction Lax47.Gap
+open Lax47.Machine Lax47.Complexity Lax47.Gap
+open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.OperationalReduction
 open Lax47Proofs.FiniteExecution
@@ -521,7 +522,7 @@ theorem gapCom_positive_bigStepB (q : ℕ) {ε : ℝ}
           simpa [initEnv, harray]
         · exact reductionGraph
         · have hcount := reductionContext.2.1.2.2.1
-          rw [hcount, GraphCode.bits_length]
+          rw [hcount, graphCode_bits_length]
           omega
       have sourceCapacity : sourceFinal.out.length ≤ capacity := by
         rw [sourceOut]

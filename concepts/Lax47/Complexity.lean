@@ -41,26 +41,11 @@ def GraphCode.graph {n : ℕ} (code : GraphCode n) : SimpleGraph (Fin n) where
   loopless := ⟨fun vertex ↦ by
     simp [code.loopless]⟩
 
-@[simp] lemma GraphCode.graph_adj {n : ℕ} (code : GraphCode n)
-    (left right : Fin n) :
-    code.graph.Adj left right ↔ code.adjacent left right = true :=
-  Iff.rfl
-
 /-- Vertex count followed by the row-major adjacency matrix. -/
 def GraphCode.bits {n : ℕ} (code : GraphCode n) : BitString :=
   n :: List.ofFn fun rank : Fin (n * n) ↦
     let vertex := finProdFinEquiv.symm rank
     bitWord (code.adjacent vertex.1 vertex.2)
-
-lemma GraphCode.bits_length {n : ℕ} (code : GraphCode n) :
-    code.bits.length = 1 + n * n := by
-  simp [GraphCode.bits, Nat.add_comm]
-
-/-- The edgeless executable graph. -/
-def GraphCode.empty (n : ℕ) : GraphCode n where
-  adjacent := fun _ _ ↦ false
-  loopless := by simp
-  symmetric := by simp
 
 /-- Decode the first $n$ output bits as a vertex set. -/
 def decodeVertexSet (n : ℕ) (bits : BitString) : Finset (Fin n) :=
@@ -75,26 +60,5 @@ structure TriangleFreeMISApproximation (ε : ℝ) where
     code.graph.IsIndepSet set ∧
       (code.graph.indepNum : ℝ) ≤
         Real.rpow n ((1 : ℝ) / 2 - ε) * set.card
-
-/-- The vertex set decoded from the certified machine's output. -/
-def TriangleFreeMISApproximation.output
-    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
-    {n : ℕ} (code : GraphCode n) : Finset (Fin n) :=
-  decodeVertexSet n (algorithm.program.output code.bits)
-
-/-- The decoded output is independent on every triangle-free input. -/
-theorem TriangleFreeMISApproximation.independent
-    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
-    {n : ℕ} (code : GraphCode n) (triangleFree : code.graph.CliqueFree 3) :
-    code.graph.IsIndepSet (algorithm.output code) :=
-  (algorithm.correctness n code triangleFree).1
-
-/-- The decoded output has the claimed approximation ratio. -/
-theorem TriangleFreeMISApproximation.approximation
-    {ε : ℝ} (algorithm : TriangleFreeMISApproximation ε)
-    {n : ℕ} (code : GraphCode n) (triangleFree : code.graph.CliqueFree 3) :
-    (code.graph.indepNum : ℝ) ≤
-      Real.rpow n ((1 : ℝ) / 2 - ε) * (algorithm.output code).card :=
-  (algorithm.correctness n code triangleFree).2
 
 end Lax47.Complexity

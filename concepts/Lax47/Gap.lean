@@ -1,4 +1,4 @@
-import Lax47.Reduction
+import Lax47.Complexity
 
 /-!
 ---
@@ -19,35 +19,7 @@ set_option autoImplicit false
 
 namespace Lax47.Gap
 
-open Lax47.Machine Lax47.Complexity Lax47.Reduction
-
-/-- Length of the fixed adjacency-matrix graph word. -/
-def graphEncodingLength (n : ℕ) : ℕ :=
-  1 + n * n
-
-/- ### Counted arithmetic used by the acceptance test -/
-
-/-- Unary multiplication paired with the work performed by its recursion. -/
-def countedMul (left : ℕ) : ℕ → ℕ × ℕ
-  | 0 => (0, 1)
-  | right + 1 =>
-      let prior := countedMul left right
-      (prior.1 + left, prior.2 + left + 1)
-
-/-- Unary exponentiation paired with the work performed by its recursion. -/
-def countedPow (base : ℕ) : ℕ → ℕ × ℕ
-  | 0 => (1, 1)
-  | exponent + 1 =>
-      let prior := countedPow base exponent
-      let product := countedMul prior.1 base
-      (product.1, prior.2 + product.2 + 1)
-
-/-- The concrete threshold comparison and its elementary-operation count. -/
-def gapDecision (q n outputCard : ℕ) : Bool × ℕ :=
-  let left := countedPow n (q + 3)
-  let right := countedPow outputCard q
-  (decide (left.1 ≤ right.1),
-    left.2 + right.2 + left.1 + right.1 + 1)
+open Lax47.Machine Lax47.Complexity
 
 /- ### Standard randomized finite-Turing programs -/
 
