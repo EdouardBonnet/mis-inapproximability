@@ -1,4 +1,4 @@
-import Lax47Proofs.OperationalReduction
+import Lax405409Proofs.OperationalReduction
 
 /-!
 The finite probability proof uses a structured family of Boolean samples,
@@ -11,10 +11,10 @@ bits remain independent and do not change any probability.
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.FlatReduction
+namespace Lax405409Proofs.FlatReduction
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FiniteExecution Lax47Proofs.OperationalReduction
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FiniteExecution Lax405409Proofs.OperationalReduction
 
 /-! ### Total decoding of a machine input
 
@@ -665,4 +665,4 @@ lemma polynomial_failure_card_le_third (n : ℕ)
             (EmbeddingComplement (flatToPolynomialEmbedding n) → Bool) :=
       Nat.mul_le_mul_right _ hfailure
 
-end Lax47Proofs.FlatReduction
+end Lax405409Proofs.FlatReduction

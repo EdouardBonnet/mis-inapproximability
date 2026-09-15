@@ -1,10 +1,10 @@
-import Lax47.Gap
+import Lax405409.Gap
 
 set_option autoImplicit false
 
-namespace Lax47Proofs
+namespace Lax405409Proofs
 
-open Lax47.Machine Lax47.Complexity
+open Lax405409.Machine Lax405409.Complexity
 
 /-!
 Proof-only conveniences derived from the public complexity interfaces.  None
@@ -61,4 +61,4 @@ def gapDecision (q n outputCard : ℕ) : Bool × ℕ :=
   (decide (left.1 ≤ right.1),
     left.2 + right.2 + left.1 + right.1 + 1)
 
-end Lax47Proofs
+end Lax405409Proofs

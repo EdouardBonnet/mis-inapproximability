@@ -1,4 +1,4 @@
-import Lax47Proofs.FiniteExecution
+import Lax405409Proofs.FiniteExecution
 
 /-!
 This module connects the fixed finite-bit implementation in the concept
@@ -10,12 +10,12 @@ the imported resampling and distributional theorems.
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.OperationalReduction
+namespace Lax405409Proofs.OperationalReduction
 
-open Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax41.MoserTardosDefinitions
-open Lax41.HaeuplerSahaSrinivasanDefinitions
-open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
+open Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax296731.MoserTardosDefinitions
+open Lax296731.HaeuplerSahaSrinivasanDefinitions
+open Lax405409Proofs.Construction Lax405409Proofs.FiniteExecution
 
 /-! ### The finite seed used by the implementation -/
 
@@ -32,7 +32,7 @@ def finiteSeedOfExecution {n : ℕ} (seed : ExecutionSeed n) : FiniteSeed n :=
     seed index.1.1
       ⟨index.1.2, by
         have hrow : index.1.2 < cutoffBudget n + 1 := by
-          exact (Lax47Proofs.FiniteExecution.mem_prefixIndices
+          exact (Lax405409Proofs.FiniteExecution.mem_prefixIndices
             (j := index.1)).mp index.2
         simpa [executionBudget, cutoffBudget] using hrow⟩
       (Fin.cast (by rfl) bit)
@@ -266,7 +266,7 @@ lemma executeRounds_counts_eq_runCounts {n : ℕ} (input : GraphCode n)
   induction round with
   | zero => rfl
   | succ round ih =>
-      rw [Lax41Proofs.runCounts_succ]
+      rw [Lax296731Proofs.runCounts_succ]
       simp only [executeRounds]
       rw [ih]
       exact advanceCounts_eq_execution input seed _ |>.symm
@@ -562,4 +562,4 @@ theorem executionSteps_polynomial {n : ℕ} (input : GraphCode n)
       have hone : 1 ≤ base ^ 20 := Nat.one_le_pow _ _ hbase
       nlinarith
 
-end Lax47Proofs.OperationalReduction
+end Lax405409Proofs.OperationalReduction

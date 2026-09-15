@@ -1,16 +1,16 @@
-import Lax47.Hastad
-import Lax47Proofs.GapMachinePolytime
+import Lax405409.Hastad
+import Lax405409Proofs.GapMachinePolytime
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.GapTransfer
+namespace Lax405409Proofs.GapTransfer
 
-open Lax47.Machine Lax47.Complexity Lax47.Gap
-open Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
-open Lax47Proofs.OperationalReduction Lax47Proofs.FlatReduction
-open Lax47Proofs.GapMachine
+open Lax405409.Machine Lax405409.Complexity Lax405409.Gap
+open Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.Construction Lax405409Proofs.FiniteExecution
+open Lax405409Proofs.OperationalReduction Lax405409Proofs.FlatReduction
+open Lax405409Proofs.GapMachine
 open Filter Asymptotics
 
 /-! ### Correctness and cost of the executable threshold arithmetic -/
@@ -884,4 +884,4 @@ lemma exists_gap_parameter (ε : ℝ) (hε : 0 < ε) :
   rw [inv_eq_one_div]
   nlinarith [hqsmall]
 
-end Lax47Proofs.GapTransfer
+end Lax405409Proofs.GapTransfer

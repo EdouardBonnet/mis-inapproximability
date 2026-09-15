@@ -1,11 +1,11 @@
-import Lax47Proofs.RamReductionFull
-import Lax47.Gap
-import Lax51Proofs.RamToTM.PolynomialBounds
+import Lax405409Proofs.RamReductionFull
+import Lax405409.Gap
+import Lax759944Proofs.RamToTM.PolynomialBounds
 
 /-!
 The complete Håstad-gap solver is one ordinary IMP+ program.  Its first
 phase is the verified finite Moser--Tardos reduction.  Its second phase is
-the Lax51 native interpreter for the supplied approximation Turing machine,
+the Lax759944 native interpreter for the supplied approximation Turing machine,
 with input and output redirected to finite arrays.  The last two phases count
 the returned vertices and perform the fixed rational threshold comparison.
 -/
@@ -13,16 +13,16 @@ the returned vertices and perform the fixed rational threshold comparison.
 set_option autoImplicit false
 set_option maxHeartbeats 2000000
 
-namespace Lax47Proofs.GapMachine
+namespace Lax405409Proofs.GapMachine
 
-open Lax47.Machine Lax47.Complexity Lax47.Gap
-open Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.RamReductionCorrectness
-open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
-open Lax13Proofs.Compile Lax13Proofs.Simulation Lax13.Ram
-open Lax51.BinaryWordEncoding Lax51.RamPolytime Lax51.TuringPolytime
+open Lax405409.Machine Lax405409.Complexity Lax405409.Gap
+open Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.RamReductionCorrectness
+open Lax405409Proofs.RamReductionSemantics Lax405409Proofs.Redirect
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
+open Lax808846Proofs.Compile Lax808846Proofs.Simulation Lax808846.Ram
+open Lax759944.BinaryWordEncoding Lax759944.RamPolytime Lax759944.TuringPolytime
 open Polynomial
 
 def outputCardVar : String := "r.outputCard"
@@ -368,7 +368,7 @@ noncomputable def approximationWitness {ε : ℝ}
     Turing.TM2ComputableInPolyTime encode encode algorithm.program.function :=
   Classical.choice algorithm.program.polytime
 
-open Lax51Proofs.TMToRam in
+open Lax759944Proofs.TMToRam in
 noncomputable def approximationNativeCom {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) : Com :=
   let H := approximationWitness algorithm
@@ -388,7 +388,7 @@ noncomputable def approximationNativeCom {ε : ℝ}
   FinTM2.compileNativeMachine tm inputStack outputStack separatorIn zeroIn oneIn
     separatorOut zeroOut oneOut initialStateCode mainLabelCode
 
-open Lax51Proofs.TMToRam in
+open Lax759944Proofs.TMToRam in
 noncomputable def approximationNativeCost {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε)
     (input output : BitString) : ℕ :=
@@ -413,7 +413,7 @@ theorem approximationNativeCom_bigStep {ε : ℝ}
   let H := approximationWitness algorithm
   have hrun := H.outputsFun input
   obtain ⟨ext, final, cost, bounded, hcost, hout⟩ :=
-    Lax51Proofs.TMToRam.FinTM2.compileNativeMachine_outputsInTime_bounded
+    Lax759944Proofs.TMToRam.FinTM2.compileNativeMachine_outputsInTime_bounded
       H.tm H.inputAlphabet H.outputAlphabet input
       (algorithm.program.output input) (H.time.eval (bitSize input)) hrun
   refine ⟨ext, final, cost, ?_, hout, ?_⟩
@@ -517,4 +517,4 @@ noncomputable def gapCom (q : ℕ) {ε : ℝ}
     .ite (.eq (.var orderVar) (.lit 0))
       (.write (.lit 0)) (positiveGapCom q algorithm)
 
-end Lax47Proofs.GapMachine
+end Lax405409Proofs.GapMachine

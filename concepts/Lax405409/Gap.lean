@@ -1,11 +1,11 @@
-import Lax47.Complexity
+import Lax405409.Complexity
 
 /-!
 ---
 title: Finite-Turing promise-gap algorithms for Max Independent Set
 type: definition
 ---
-The Håstad premise is stated only for functions certified by Lax51's genuine
+The Håstad premise is stated only for functions certified by Lax759944's genuine
 finite-Turing polynomial-time predicate.  A randomized program fixes constants
 $c,k$ and receives exactly $c(n+1)^k$ uniform bits on an $n$-vertex input.
 There is no special constructor for the reduction and no detached step
@@ -17,9 +17,9 @@ $n^{q+3}\leq |S|^q$.
 
 set_option autoImplicit false
 
-namespace Lax47.Gap
+namespace Lax405409.Gap
 
-open Lax47.Machine Lax47.Complexity
+open Lax405409.Machine Lax405409.Complexity
 
 /- ### Standard randomized finite-Turing programs -/
 
@@ -72,4 +72,4 @@ structure MISGapSolver (q : ℕ) where
       3 * (program.acceptingSeeds n input).card ≤
         (program.seeds n).card
 
-end Lax47.Gap
+end Lax405409.Gap

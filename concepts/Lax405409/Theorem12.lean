@@ -1,4 +1,4 @@
-import Lax47.Hastad
+import Lax405409.Hastad
 
 /-!
 ---
@@ -17,13 +17,13 @@ Its triangle-free conclusion is Theorem 1.2 in the submitted paper.
 
 set_option autoImplicit false
 
-namespace Lax47.Theorem12
+namespace Lax405409.Theorem12
 
-open Lax47.Complexity
+open Lax405409.Complexity
 
 /-- Håstad hardness implies tight conditional inapproximability on triangle-free graphs. -/
 axiom theorem_1_2 :
-  Lax47.Hastad.Inapproximability →
+  Lax405409.Hastad.Inapproximability →
     ∀ (ε : ℝ), 0 < ε → TriangleFreeMISApproximation ε → NPSubsetBPP
 
-end Lax47.Theorem12
+end Lax405409.Theorem12
