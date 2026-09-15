@@ -1,4 +1,4 @@
-import Lax47.Machine
+import Lax405409.Machine
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Data.Finset.Card
@@ -11,17 +11,17 @@ type: definition
 Graphs are finite Boolean adjacency matrices with symmetry and looplessness
 certificates.  Their machine word is the vertex count followed by the complete
 row-major matrix, with Booleans encoded by $0$ and $1$.  An approximation is a
-function certified polynomial-time by the Lax51 finite-Turing model; its
+function certified polynomial-time by the Lax759944 finite-Turing model; its
 returned independent set is decoded from that certified function.
 -/
 
 set_option autoImplicit false
 
-namespace Lax47.Complexity
+namespace Lax405409.Complexity
 
-open Lax47.Machine
+open Lax405409.Machine
 
-export Lax47.Machine
+export Lax405409.Machine
   (BitString Language RandomSeed PolytimeProgram NPVerifier BPPAlgorithm
     InNP InBPP NPSubsetBPP polynomialBound pairBits)
 
@@ -34,10 +34,9 @@ structure GraphCode (n : ℕ) where
 /-- The mathematical simple graph represented by a Boolean adjacency matrix. -/
 def GraphCode.graph {n : ℕ} (code : GraphCode n) : SimpleGraph (Fin n) where
   Adj left right := code.adjacent left right = true
-  symm left right h := by
-    change code.adjacent right left = true
-    rw [← code.symmetric]
-    exact h
+  symm := ⟨fun left right h ↦ by
+      rw [← code.symmetric]
+      exact h⟩
   loopless := ⟨fun vertex ↦ by
     simp [code.loopless]⟩
 
@@ -61,4 +60,4 @@ structure TriangleFreeMISApproximation (ε : ℝ) where
       (code.graph.indepNum : ℝ) ≤
         Real.rpow n ((1 : ℝ) / 2 - ε) * set.card
 
-end Lax47.Complexity
+end Lax405409.Complexity

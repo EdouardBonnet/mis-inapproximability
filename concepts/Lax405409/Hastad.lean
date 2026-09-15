@@ -1,4 +1,4 @@
-import Lax47.Gap
+import Lax405409.Gap
 
 /-!
 ---
@@ -18,12 +18,12 @@ this premise to the triangle-free inapproximability conclusion.
 
 set_option autoImplicit false
 
-namespace Lax47.Hastad
+namespace Lax405409.Hastad
 
-open Lax47.Machine Lax47.Gap
+open Lax405409.Machine Lax405409.Gap
 
 /-- Håstad's general-graph promise-gap inapproximability premise. -/
 def Inapproximability : Prop :=
   ∀ q : ℕ, 3 ≤ q → MISGapSolver q → NPSubsetBPP
 
-end Lax47.Hastad
+end Lax405409.Hastad

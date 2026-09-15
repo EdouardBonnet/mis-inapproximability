@@ -1,21 +1,21 @@
-import Lax47Proofs.RamReductionCorrectness
+import Lax405409Proofs.RamReductionCorrectness
 
 /-!
 Semantic correctness of the resampling and graph-output phases of the fixed
 IMP+ reduction.  The preceding file establishes the bounded arithmetic
 decoders; this file relates their scalar and array states to the finite
-Moser--Tardos execution used in the Lax41 analysis.
+Moser--Tardos execution used in the Lax296731 analysis.
 -/
 
 set_option autoImplicit false
 set_option maxHeartbeats 1000000
 
-namespace Lax47Proofs.RamReductionSemantics
+namespace Lax405409Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.RamReductionCorrectness
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
 
 lemma canonicalSlot_blowupRank {n : ℕ} (left right : BlowupVertex n) :
     canonicalSlot (n * n) (blowupRank left) (blowupRank right) =
@@ -1604,4 +1604,4 @@ theorem resamplingRoundBody_spec (B : ℕ) {n : ℕ}
   all_goals aesop
 -/
 
-end Lax47Proofs.RamReductionSemantics
+end Lax405409Proofs.RamReductionSemantics

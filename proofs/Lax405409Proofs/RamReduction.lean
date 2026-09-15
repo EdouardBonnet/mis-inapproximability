@@ -1,11 +1,11 @@
-import Lax47Proofs.FlatReduction
-import Lax51Proofs.TMToRam.NativeBounded
-import Lax51Proofs.TuringRamPolytimeEquivalence
-import Lax13Proofs.Refine.Codegen.Harness
+import Lax405409Proofs.FlatReduction
+import Lax759944Proofs.TMToRam.NativeBounded
+import Lax759944Proofs.TuringRamPolytimeEquivalence
+import Lax405409Proofs.Harness
 
 /-!
 The reduction used by the gap solver is implemented here as one fixed IMP+
-program.  IMP+ has a grounded compiler to the Lax13 word RAM, and Lax51 has a
+program.  IMP+ has a grounded compiler to the Lax808846 word RAM, and Lax759944 has a
 grounded polynomial-overhead simulation from that RAM to a finite Turing
 machine.  Thus every cost below is attached to an actual execution trace.
 
@@ -18,13 +18,13 @@ computed from the capped order.
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.RamReduction
+namespace Lax405409Proofs.RamReduction
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction
-open Lax13Proofs.Imp
-open Lax13Proofs.Reasoning
-open Lax13Proofs.Codegen
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction
+open Lax808846Proofs.Imp
+open Lax808846Proofs.Reasoning
+open Lax405409Proofs.Codegen
 
 /-! ### Fixed names and small syntax combinators -/
 
@@ -393,4 +393,4 @@ theorem edgeSlotCom_spec (B : ℕ) (left right destination : String) :
   unfold edgeSlotCom
   run_vcg <;> simp_all <;> omega
 
-end Lax47Proofs.RamReduction
+end Lax405409Proofs.RamReduction

@@ -1,5 +1,5 @@
-import Lax47Proofs.RamReductionRounds
-import Lax47Proofs.Redirect
+import Lax405409Proofs.RamReductionRounds
+import Lax405409Proofs.Redirect
 
 /-!
 Construction of the encoded output graph after the bounded resampling run.
@@ -8,12 +8,12 @@ Construction of the encoded output graph after the bounded resampling run.
 set_option autoImplicit false
 set_option maxHeartbeats 1000000
 
-namespace Lax47Proofs.RamReductionSemantics
+namespace Lax405409Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.RamReductionCorrectness
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
 
 def HasOutputPair {n : ℕ} (left right : Fin (n * n)) (state : Env) : Prop :=
   let u := decodeBlowupVertex left
@@ -645,7 +645,7 @@ theorem outputLoopBody_spec (B : ℕ) {n : ℕ}
   have harrayFinal : final.arrs graphArray =
       target.bits.take ((i + 1) + 1) ++
         List.replicate (target.bits.length - ((i + 1) + 1)) 0 := by
-    have hcapture := Lax47Proofs.Redirect.capture_set
+    have hcapture := Lax405409Proofs.Redirect.capture_set
       (target.bits.take (i + 1)) target.bits.length targetBit hroom
     have hstored : afterStore.arrs graphArray =
         (initial.arrs graphArray).set (i + 1) targetBit := by
@@ -776,7 +776,7 @@ theorem buildOutputGraph_spec (B : ℕ) {n : ℕ}
     simpa [target, seed] using harray
   have arrayHeader : afterHeader.arrs graphArray =
       target.bits.take 1 ++ List.replicate (target.bits.length - 1) 0 := by
-    have hcapture := Lax47Proofs.Redirect.capture_set
+    have hcapture := Lax405409Proofs.Redirect.capture_set
       ([] : List ℕ) target.bits.length (n * n) (by
         rw [htargetLength]
         simp)
@@ -821,4 +821,4 @@ theorem buildOutputGraph_spec (B : ℕ) {n : ℕ}
   · simpa [counts, seed] using contextFinal
   · simpa [seed] using haltedFinal
 
-end Lax47Proofs.RamReductionSemantics
+end Lax405409Proofs.RamReductionSemantics

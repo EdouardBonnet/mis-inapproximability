@@ -1,5 +1,5 @@
-import Lax47Proofs.ProofSupport
-import Lax41.MoserTardosDefinitions
+import Lax405409Proofs.ProofSupport
+import Lax296731.MoserTardosDefinitions
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Probability.ProductMeasure
 
@@ -7,10 +7,10 @@ set_option autoImplicit false
 
 open scoped ENNReal
 
-namespace Lax47Proofs.Reduction
+namespace Lax405409Proofs.Reduction
 
-open Lax41.MoserTardosDefinitions
-open Lax47.Complexity
+open Lax296731.MoserTardosDefinitions
+open Lax405409.Complexity
 
 /-- Vertices of the complete $n$-fold blow-up. -/
 abbrev BlowupVertex (n : ℕ) := Fin n × Fin n
@@ -227,4 +227,4 @@ def executionSteps {n : ℕ} (input : GraphCode n)
     (findExecutionViolation input seed (executionCounts input seed)).2 +
     (n + 1) ^ 4
 
-end Lax47Proofs.Reduction
+end Lax405409Proofs.Reduction

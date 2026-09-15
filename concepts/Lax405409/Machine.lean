@@ -1,12 +1,12 @@
-import Lax51.TuringPolytime
+import Lax759944.TuringPolytime
 
 /-!
 ---
-title: Polynomial-time computation on the Lax51 finite-Turing model
+title: Polynomial-time computation on the Lax759944 finite-Turing model
 type: definition
 ---
 All algorithms in this submission compute total functions on finite words of
-natural numbers.  Polynomial time is exactly Lax51's predicate: a fixed
+natural numbers.  Polynomial time is exactly Lax759944's predicate: a fixed
 finite multi-stack Turing machine transforms the canonical binary encoding of
 the input word into the canonical binary encoding of its output within a
 polynomial number of transitions.
@@ -18,9 +18,9 @@ list of independent uniform bits, represented by the words $0$ and $1$.
 
 set_option autoImplicit false
 
-namespace Lax47.Machine
+namespace Lax405409.Machine
 
-open Lax51.BinaryWordEncoding Lax51.TuringPolytime
+open Lax759944.BinaryWordEncoding Lax759944.TuringPolytime
 
 /-- A finite machine word.  Boolean data use the entries $0$ and $1$. -/
 abbrev BitString := List ℕ
@@ -69,7 +69,7 @@ structure NPVerifier (language : Language) where
         certificateConstant certificateExponent (bitSize input) ∧
       program.output (pairBits input certificate) = [1]
 
-/-- Membership in $NP$ in the Lax51 finite-Turing model. -/
+/-- Membership in $NP$ in the Lax759944 finite-Turing model. -/
 def InNP (language : Language) : Prop :=
   Nonempty (NPVerifier language)
 
@@ -96,4 +96,4 @@ def InBPP (language : Language) : Prop :=
 def NPSubsetBPP : Prop :=
   ∀ language : Language, InNP language → InBPP language
 
-end Lax47.Machine
+end Lax405409.Machine

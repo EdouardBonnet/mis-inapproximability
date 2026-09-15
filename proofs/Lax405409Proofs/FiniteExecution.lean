@@ -1,4 +1,4 @@
-import Lax47Proofs.Construction
+import Lax405409Proofs.Construction
 import Mathlib.Probability.Distributions.Uniform
 
 /-!
@@ -12,12 +12,12 @@ randomness supplied to the gap algorithm.
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.FiniteExecution
+namespace Lax405409Proofs.FiniteExecution
 
 open scoped BigOperators ENNReal
-open Lax47Proofs.Reduction
-open Lax41.MoserTardosDefinitions
-open Lax47Proofs.Construction
+open Lax405409Proofs.Reduction
+open Lax296731.MoserTardosDefinitions
+open Lax405409Proofs.Construction
 
 /-- The edge-table cells with row at most the resampling cutoff. -/
 def prefixIndices (n : ℕ) :
@@ -41,8 +41,8 @@ lemma runCounts_le_round {n : ℕ} (H : SimpleGraph (Fin n))
     runCounts (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) (selectionRule H) table round e ≤ round := by
   classical
-  rw [Lax41Proofs.runCounts_eq_priorCount]
-  unfold Lax41Proofs.priorCountFor
+  rw [Lax296731Proofs.runCounts_eq_priorCount]
+  unfold Lax296731Proofs.priorCountFor
   exact (Finset.card_filter_le _ _).trans (by simp)
 
 lemma runCounts_eq_of_tablesAgreeThrough {n : ℕ}
@@ -57,7 +57,7 @@ lemma runCounts_eq_of_tablesAgreeThrough {n : ℕ}
   | zero => rfl
   | succ round ih =>
       have hrB : round ≤ B := by omega
-      rw [Lax41Proofs.runCounts_succ, Lax41Proofs.runCounts_succ,
+      rw [Lax296731Proofs.runCounts_succ, Lax296731Proofs.runCounts_succ,
         ih hrB]
       congr 1
       unfold resamplingLog
@@ -412,7 +412,7 @@ lemma filter_card_le_third_of_measure_le (n : ℕ)
           (Finset.univ : Finset (FiniteSeed n)).card ≤ (1 : ℝ≥0∞) / 3 := by
     unfold finiteSeedMeasure uniformMeasure at hmeasure
     rw [PMF.toMeasure_uniformOfFintype_apply {seed | P seed} hmeas] at hmeasure
-    simpa only [Fintype.card_subtype, Finset.setOf_mem, Finset.card_univ] using hmeasure
+    simpa [Fintype.card_subtype] using hmeasure
   apply three_mul_le_of_ratio_le_third _ _
   · simp
   · exact hratio
@@ -435,11 +435,12 @@ theorem finiteSeed_truncatedGraph_soundness_failure_le_third
           ((truncatedGraph H
             (extendFiniteTable (seedFiniteTable seed))).indepNum : ℝ)} =
         finiteTableMeasure n target := by
-      simpa only [P, target, Set.preimage_setOf_eq] using
-        finiteSeed_event_probability n target
+      change finiteSeedMeasure n (seedFiniteTable ⁻¹' target) =
+        finiteTableMeasure n target
+      exact finiteSeed_event_probability n target
     _ = sampleMeasure n {table | P (truncatedGraph H table)} :=
       (truncatedGraph_event_probability_finite H P).symm
     _ ≤ (1 : ℝ≥0∞) / 3 := by
       simpa only [P] using truncatedGraph_soundness_failure_le_third n hn H
 
-end Lax47Proofs.FiniteExecution
+end Lax405409Proofs.FiniteExecution

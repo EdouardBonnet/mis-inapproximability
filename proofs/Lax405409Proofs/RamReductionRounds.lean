@@ -1,4 +1,4 @@
-import Lax47Proofs.RamReductionCounter
+import Lax405409Proofs.RamReductionCounter
 
 /-!
 The fixed polynomially bounded sequence of resampling rounds.
@@ -7,12 +7,12 @@ The fixed polynomially bounded sequence of resampling rounds.
 set_option autoImplicit false
 set_option maxHeartbeats 1000000
 
-namespace Lax47Proofs.RamReductionSemantics
+namespace Lax405409Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.RamReductionCorrectness
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
 
 lemma advanceExecutionCounts_le_succ {n : ℕ}
     (counts : EdgeVariable n → ℕ) (selection : Option (ExecutionTriple n))
@@ -204,4 +204,4 @@ theorem resamplingRounds_spec (B : ℕ) {n : ℕ}
       tripleCount]
     omega
 
-end Lax47Proofs.RamReductionSemantics
+end Lax405409Proofs.RamReductionSemantics

@@ -1,7 +1,7 @@
 specVersion: "1"
-id: lax-47
-leanVersion: "v4.30.0"
-mathlibVersion: "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+id: lax-405409
+leanVersion: "v4.33.0"
+mathlibVersion: "db584cd6d46c92f209a44c0f1c829460d327499d"
 title: Tight Inapproximability of Max Independent Set in Triangle-Free Graphs
 authors:
   - name: Édouard Bonnet

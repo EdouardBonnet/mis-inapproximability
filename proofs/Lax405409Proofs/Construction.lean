@@ -1,18 +1,20 @@
-import Lax47Proofs.Reduction
-import Lax41Proofs.MoserTardos
-import Lax41Proofs.HaeuplerSahaSrinivasanTheorem22
+import Lax405409Proofs.Reduction
+import Lax296731Proofs.MoserTardos
+import Lax296731Proofs.HaeuplerSahaSrinivasanTheorem22
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 
 set_option autoImplicit false
 
-namespace Lax47Proofs.Construction
+namespace Lax405409Proofs.Construction
 
 open scoped ENNReal BigOperators
-open Lax47Proofs.Reduction
-open Lax41.MoserTardosDefinitions
-open Lax41.HaeuplerSahaSrinivasanDefinitions
+open Lax405409Proofs.Reduction
+open Lax296731.MoserTardosDefinitions
+open Lax296731.HaeuplerSahaSrinivasanDefinitions
 
 noncomputable section
+
+attribute [local instance] Fintype.ofFinite
 
 /-! ### The resampling instance -/
 
@@ -400,8 +402,10 @@ lemma bad_event_probability {n : ℕ} (H : SimpleGraph (Fin n))
   rw [eventProbability]
   change localMeasure (fun _ : EdgeVariable n ↦ Bool) (distribution n)
       (variablesOf H (Sum.inl t)) (eventSet H (Sum.inl t)) = _
-  simpa only [variablesOf, eventSet, triangleVariables_card ht] using
-    localMeasure_all_true (n := n) (triangleVariables t)
+  simp only [variablesOf, eventSet]
+  have h := localMeasure_all_true (n := n) (triangleVariables t)
+  rw [triangleVariables_card ht] at h
+  exact h
 
 lemma query_event_probability {n : ℕ} (H : SimpleGraph (Fin n))
     (S : Finset (BlowupVertex n)) :
@@ -534,10 +538,10 @@ lemma badVariables_eq_triangleVariables {n : ℕ} {H : SimpleGraph (Fin n)}
 each variable occurs in at most $6n^2$ ordered triples. -/
 lemma dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) :
-    (Lax41.MoserTardosDefinitions.dependencyNeighborhood
+    (Lax296731.MoserTardosDefinitions.dependencyNeighborhood
       (badVariables H) A).card ≤ 18 * n ^ 2 := by
   classical
-  let D := Lax41.MoserTardosDefinitions.dependencyNeighborhood
+  let D := Lax296731.MoserTardosDefinitions.dependencyNeighborhood
     (badVariables H) A
   let candidates := (triangleVariables (badTriple A)).biUnion triplesUsing
   have hcandidates : candidates.card ≤ 18 * n ^ 2 := by
@@ -553,7 +557,7 @@ lemma dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
     obtain ⟨C, hCD, rfl⟩ := ht
     have hoverlap : ¬Disjoint (badVariables H A) (badVariables H C) := by
       have hCD' : C ≠ A ∧ ¬Disjoint (badVariables H A) (badVariables H C) := by
-        simpa only [D, Lax41.MoserTardosDefinitions.dependencyNeighborhood,
+        simpa only [D, Lax296731.MoserTardosDefinitions.dependencyNeighborhood,
           Finset.mem_filter, Finset.mem_univ, true_and] using hCD
       exact hCD'.2
     rw [badVariables_eq_triangleVariables,
@@ -573,11 +577,11 @@ lemma dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
 ordered triangle events. -/
 lemma query_dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
     (S : Finset (BlowupVertex n)) :
-    (Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+    (Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
       (badEvents H) (variablesOf H) (Sum.inr S)).card ≤
         (variablesOf H (Sum.inr S)).card * (6 * n ^ 2) := by
   classical
-  let D := Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+  let D := Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
     (badEvents H) (variablesOf H) (Sum.inr S)
   let candidates := (variablesOf H (Sum.inr S)).biUnion triplesUsing
   have hcandidates : candidates.card ≤
@@ -591,7 +595,7 @@ lemma query_dependency_card_le {n : ℕ} (H : SimpleGraph (Fin n))
         (variablesOf H (Sum.inr S)) := by
       have hAD' := hAD
       simp only [D,
-        Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood,
+        Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood,
         Finset.mem_filter, Finset.mem_univ, true_and] at hAD'
       exact hAD'.2
     rw [show variablesOf H A.1 = triangleVariables (badTriple A) by
@@ -645,7 +649,8 @@ lemma edgeChance_le_hundredth (n : ℕ) :
       apply (inv_le_inv₀ (by norm_num) (by positivity)).2
       have hn : (1 : NNReal) ≤ ((n + 1 : ℕ) : NNReal) := by
         exact_mod_cast Nat.succ_pos n
-      simpa only [mul_one] using mul_le_mul_left' hn (100 : NNReal)
+      simpa only [mul_one] using (show
+        (100 : NNReal) * 1 ≤ 100 * ((n + 1 : ℕ) : NNReal) by gcongr)
     _ = 1 / 100 := by rw [one_div]
 
 lemma charge_pos {n : ℕ} (H : SimpleGraph (Fin n))
@@ -793,12 +798,12 @@ lemma query_base_after_correction_le (n : ℕ) :
 lemma query_correction_le {n : ℕ} (H : SimpleGraph (Fin n))
     (S : Finset (BlowupVertex n)) :
     (∏ A ∈
-        Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+        Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
           (badEvents H) (variablesOf H) (Sum.inr S),
         (1 - charge H A)⁻¹ : NNReal) ≤
       (1 - edgeChance n / 4 : NNReal)⁻¹ ^
         (variablesOf H (Sum.inr S)).card := by
-  let D := Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+  let D := Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
     (badEvents H) (variablesOf H) (Sum.inr S)
   have hD := query_dependency_card_le H S
   have hx : (2 * edgeChance n ^ 3 : NNReal) < 1 := by
@@ -827,7 +832,7 @@ lemma query_hss_upper_nnreal {n : ℕ} (H : SimpleGraph (Fin n))
     (S : Finset (BlowupVertex n)) :
     (1 - edgeChance n : NNReal) ^ (variablesOf H (Sum.inr S)).card *
         (∏ A ∈
-          Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+          Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
             (badEvents H) (variablesOf H) (Sum.inr S),
           (1 - charge H A)⁻¹ : NNReal) ≤
       (1 - edgeChance n / 2 : NNReal) ^
@@ -835,13 +840,13 @@ lemma query_hss_upper_nnreal {n : ℕ} (H : SimpleGraph (Fin n))
   calc
     (1 - edgeChance n : NNReal) ^ (variablesOf H (Sum.inr S)).card *
         (∏ A ∈
-          Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+          Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
             (badEvents H) (variablesOf H) (Sum.inr S),
           (1 - charge H A)⁻¹ : NNReal) ≤
         (1 - edgeChance n : NNReal) ^ (variablesOf H (Sum.inr S)).card *
           (1 - edgeChance n / 4 : NNReal)⁻¹ ^
             (variablesOf H (Sum.inr S)).card := by
-      exact mul_le_mul_left' (query_correction_le H S) _
+      exact mul_le_mul_of_nonneg_left (query_correction_le H S) (by positivity)
     _ = ((1 - edgeChance n : NNReal) *
         (1 - edgeChance n / 4 : NNReal)⁻¹) ^
           (variablesOf H (Sum.inr S)).card := by rw [mul_pow]
@@ -852,9 +857,9 @@ lemma query_hss_upper_nnreal {n : ℕ} (H : SimpleGraph (Fin n))
 lemma half_le_dependency_product {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) :
     (1 / 2 : NNReal) ≤
-      ∏ B ∈ Lax41.MoserTardosDefinitions.dependencyNeighborhood
+      ∏ B ∈ Lax296731.MoserTardosDefinitions.dependencyNeighborhood
         (badVariables H) A, (1 - charge H B : NNReal) := by
-  let D := Lax41.MoserTardosDefinitions.dependencyNeighborhood
+  let D := Lax296731.MoserTardosDefinitions.dependencyNeighborhood
     (badVariables H) A
   have hcard := charge_mul_dependency_card_le_half (dependency_card_le H A)
   have hcard' : (D.card : ℝ) * (charge H A : ℝ) ≤ 1 / 2 := by
@@ -878,7 +883,7 @@ lemma local_lemma_hypothesis {n : ℕ} (H : SimpleGraph (Fin n))
     eventProbability (fun _ : EdgeVariable n ↦ Bool) (distribution n)
         (badVariables H) (badSet H) A ≤
       ((charge H A * ∏ B ∈
-        Lax41.MoserTardosDefinitions.dependencyNeighborhood
+        Lax296731.MoserTardosDefinitions.dependencyNeighborhood
           (badVariables H) A, (1 - charge H B) : NNReal) : ℝ≥0∞) := by
   rw [bad_event_probability]
   rw [← ENNReal.coe_pow]
@@ -888,21 +893,22 @@ lemma local_lemma_hypothesis {n : ℕ} (H : SimpleGraph (Fin n))
       simp only [charge]
       field_simp
     _ ≤ charge H A * ∏ B ∈
-        Lax41.MoserTardosDefinitions.dependencyNeighborhood
+        Lax296731.MoserTardosDefinitions.dependencyNeighborhood
           (badVariables H) A, (1 - charge H B : NNReal) := by
-      exact mul_le_mul_left' (half_le_dependency_product H A) _
+      exact mul_le_mul_of_nonneg_left (half_le_dependency_product H A) (by positivity)
 
 lemma dependencyNeighborhood_eq {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) :
-    Lax41.MoserTardosDefinitions.dependencyNeighborhood (badVariables H) A =
-      Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+    Lax296731.MoserTardosDefinitions.dependencyNeighborhood (badVariables H) A =
+      Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
         (badEvents H) (variablesOf H) A.1 := by
   classical
-  ext C
-  simp only [Lax41.MoserTardosDefinitions.dependencyNeighborhood,
-    Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood,
-    Finset.mem_filter, Finset.mem_univ, true_and, badVariables,
-    badEventVariables]
+  unfold Lax296731.MoserTardosDefinitions.dependencyNeighborhood
+    Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+  apply Finset.filter_congr
+  intro C _
+  change (C ≠ A ∧ ¬Disjoint (variablesOf H A.1) (variablesOf H C.1)) ↔
+    (C.1 ≠ A.1 ∧ ¬Disjoint (variablesOf H C.1) (variablesOf H A.1))
   constructor
   · rintro ⟨hne, hoverlap⟩
     exact ⟨fun h ↦ hne (Subtype.ext h), fun hd ↦ hoverlap hd.symm⟩
@@ -912,7 +918,7 @@ lemma dependencyNeighborhood_eq {n : ℕ} (H : SimpleGraph (Fin n))
 /-- The imported, axiom-free Moser--Tardos theorem specialized to the
 triangle resampling instance. -/
 noncomputable def moserTardos_certificate {n : ℕ} (H : SimpleGraph (Fin n)) :=
-  Lax41Proofs.moser_tardos (fun _ : EdgeVariable n ↦ Bool)
+  Lax296731Proofs.moser_tardos (fun _ : EdgeVariable n ↦ Bool)
     (distribution n) (badVariables H) (badSet H)
     (fun _ ↦ Set.toFinite _ |>.measurableSet) (selectionRule H)
     (charge H) (charge_pos H) (charge_lt_one H)
@@ -922,7 +928,7 @@ noncomputable def moserTardos_certificate {n : ℕ} (H : SimpleGraph (Fin n)) :=
 same run and to any observation in the common event universe. -/
 noncomputable def hss_certificate {n : ℕ} (H : SimpleGraph (Fin n))
     (B : ReductionEvent n) :=
-  Lax41Proofs.theorem_2_2 (fun _ : EdgeVariable n ↦ Bool)
+  Lax296731Proofs.theorem_2_2 (fun _ : EdgeVariable n ↦ Bool)
     (distribution n) (badEvents H) (variablesOf H) (eventSet H)
     (bad_event_measurable H) (selectionRule H) (charge H)
     (charge_pos H) (charge_lt_one H)
@@ -951,14 +957,14 @@ lemma query_output_probability_le {n : ℕ} (H : SimpleGraph (Fin n))
         (((1 - edgeChance n : NNReal) ^
             (variablesOf H (Sum.inr S)).card : NNReal) : ℝ≥0∞) *
           ((∏ A ∈
-            Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+            Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
               (badEvents H) (variablesOf H) (Sum.inr S),
             (1 - charge H A)⁻¹ : NNReal) : ℝ≥0∞) := by
       simpa only [probabilityEventInOutput, sampleMeasure, ENNReal.coe_pow] using h
     _ = (((1 - edgeChance n : NNReal) ^
           (variablesOf H (Sum.inr S)).card *
           (∏ A ∈
-            Lax41.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
+            Lax296731.HaeuplerSahaSrinivasanDefinitions.dependencyNeighborhood
               (badEvents H) (variablesOf H) (Sum.inr S),
             (1 - charge H A)⁻¹ : NNReal) : NNReal) : ℝ≥0∞) := by
       rw [ENNReal.coe_mul]
@@ -974,20 +980,20 @@ lemma local_lemma_bound_hypothesis {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) :
     eventProbability (fun _ : EdgeVariable n ↦ Bool) (distribution n)
         (badVariables H) (badSet H) A ≤
-      (Lax41Proofs.localLemmaBound (badVariables H) (charge H) A : ℝ≥0∞) := by
-  rw [Lax41Proofs.localLemmaBound_eq_dependencyNeighborhoodProduct]
+      (Lax296731Proofs.localLemmaBound (badVariables H) (charge H) A : ℝ≥0∞) := by
+  rw [Lax296731Proofs.localLemmaBound_eq_dependencyNeighborhoodProduct]
   exact local_lemma_hypothesis H A
 
 lemma passingTreeCount_lintegral_le {n : ℕ} (H : SimpleGraph (Fin n))
     (A : BadEventIndex (badEvents H)) :
-    (∫⁻ table, Lax41Proofs.passingTreeCount
+    (∫⁻ table, Lax296731Proofs.passingTreeCount
         (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H) table A
-      ∂sampleMeasure n) ≤ (Lax41Proofs.odds (charge H) A : ℝ≥0∞) := by
-  apply Lax41Proofs.lintegral_passingTreeCount_le_of_charge
+      ∂sampleMeasure n) ≤ (Lax296731Proofs.odds (charge H) A : ℝ≥0∞) := by
+  apply Lax296731Proofs.lintegral_passingTreeCount_le_of_charge
     (fun _ : EdgeVariable n ↦ Bool) (distribution n)
     (badVariables H) (badSet H)
     (fun _ ↦ Set.toFinite _ |>.measurableSet)
-  exact Lax41Proofs.charge_of_localLemmaBound
+  exact Lax296731Proofs.charge_of_localLemmaBound
     (badVariables H)
     (eventProbability (fun _ : EdgeVariable n ↦ Bool) (distribution n)
       (badVariables H) (badSet H))
@@ -996,12 +1002,12 @@ lemma passingTreeCount_lintegral_le {n : ℕ} (H : SimpleGraph (Fin n))
 lemma eventually_passingTreeCount_lt_top {n : ℕ} (H : SimpleGraph (Fin n)) :
     ∀ᵐ table ∂sampleMeasure n,
       ∀ A : BadEventIndex (badEvents H),
-        Lax41Proofs.passingTreeCount
+        Lax296731Proofs.passingTreeCount
           (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H) table A < ⊤ := by
   rw [Filter.eventually_all]
   intro A
   apply MeasureTheory.ae_lt_top
-    (Lax41Proofs.measurable_passingTreeCount
+    (Lax296731Proofs.measurable_passingTreeCount
       (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
       (fun _ ↦ Set.toFinite _ |>.measurableSet) A)
   exact ne_of_lt ((passingTreeCount_lintegral_le H A).trans_lt ENNReal.coe_lt_top)
@@ -1009,11 +1015,11 @@ lemma eventually_passingTreeCount_lt_top {n : ℕ} (H : SimpleGraph (Fin n)) :
 lemma exists_termination_time {n : ℕ} {H : SimpleGraph (Fin n)}
     {table : SampleTable n}
     (hpass : ∀ A : BadEventIndex (badEvents H),
-      Lax41Proofs.passingTreeCount
+      Lax296731Proofs.passingTreeCount
         (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H) table A < ⊤) :
     ∃ t, resamplingLog (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) (selectionRule H) table t = none :=
-  Lax41Proofs.exists_termination_time_of_passing_lt_top
+  Lax296731Proofs.exists_termination_time_of_passing_lt_top
     (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
     (selectionRule H) table hpass
 
@@ -1125,8 +1131,8 @@ lemma charge_le_half {n : ℕ} (H : SimpleGraph (Fin n))
       norm_num
 
 lemma odds_le_one {n : ℕ} (H : SimpleGraph (Fin n))
-    (A : BadEventIndex (badEvents H)) : Lax41Proofs.odds (charge H) A ≤ 1 := by
-  rw [Lax41Proofs.odds, div_le_one (tsub_pos_of_lt (charge_lt_one H A))]
+    (A : BadEventIndex (badEvents H)) : Lax296731Proofs.odds (charge H) A ≤ 1 := by
+  rw [Lax296731Proofs.odds, div_le_one (tsub_pos_of_lt (charge_lt_one H A))]
   rw [← NNReal.coe_le_coe, NNReal.coe_sub (charge_lt_one H A).le]
   have hhalf : (charge H A : ℝ) ≤ 1 / 2 := by
     exact_mod_cast charge_le_half H A
@@ -1169,7 +1175,7 @@ theorem expectedResamplingCounts_polynomial {n : ℕ} (H : SimpleGraph (Fin n)) 
 noncomputable def workEnvelope {n : ℕ} (H : SimpleGraph (Fin n))
     (table : SampleTable n) : ℝ≥0∞ :=
   ∑ A : BadEventIndex (badEvents H),
-    Lax41Proofs.passingTreeCount (fun _ : EdgeVariable n ↦ Bool)
+    Lax296731Proofs.passingTreeCount (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) table A
 
 /-- The imported witness-tree injection bounds the actual number of resamplings. -/
@@ -1179,7 +1185,7 @@ lemma resamplingSteps_le_workEnvelope {n : ℕ} (H : SimpleGraph (Fin n))
   unfold resamplingSteps workEnvelope
   apply Finset.sum_le_sum
   intro A _
-  exact Lax41Proofs.resamplingCount_le_passingTreeCount
+  exact Lax296731Proofs.resamplingCount_le_passingTreeCount
     (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
     (selectionRule H) table A
 
@@ -1194,7 +1200,7 @@ lemma exists_termination_time_of_resamplingSteps_lt_top {n : ℕ}
     {t | resamplingLog (fun _ : EdgeVariable n ↦ Bool)
       (badVariables H) (badSet H) (selectionRule H) table t = some A}
   have hfinite (A : BadEventIndex (badEvents H)) : (times A).Finite := by
-    apply Lax41Proofs.resamplingTimes_finite_of_count_lt_top
+    apply Lax296731Proofs.resamplingTimes_finite_of_count_lt_top
       (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
       (selectionRule H) table A
     have hle : resamplingCount (fun _ : EdgeVariable n ↦ Bool)
@@ -1218,7 +1224,7 @@ lemma measurable_workEnvelope {n : ℕ} (H : SimpleGraph (Fin n)) :
   unfold workEnvelope
   apply Finset.measurable_fun_sum
   intro A _
-  exact Lax41Proofs.measurable_passingTreeCount
+  exact Lax296731Proofs.measurable_passingTreeCount
     (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
     (fun _ ↦ Set.toFinite _ |>.measurableSet) A
 
@@ -1227,17 +1233,17 @@ theorem workEnvelope_expected_polynomial {n : ℕ} (H : SimpleGraph (Fin n)) :
   calc
     (∫⁻ table, workEnvelope H table ∂sampleMeasure n) =
       ∑ A : BadEventIndex (badEvents H),
-        ∫⁻ table, Lax41Proofs.passingTreeCount
+        ∫⁻ table, Lax296731Proofs.passingTreeCount
           (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H) table A
           ∂sampleMeasure n := by
       unfold workEnvelope
       rw [MeasureTheory.lintegral_finsetSum]
       intro A _
-      exact Lax41Proofs.measurable_passingTreeCount
+      exact Lax296731Proofs.measurable_passingTreeCount
         (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
         (fun _ ↦ Set.toFinite _ |>.measurableSet) A
     _ ≤ ∑ A : BadEventIndex (badEvents H),
-        (Lax41Proofs.odds (charge H) A : ℝ≥0∞) := by
+        (Lax296731Proofs.odds (charge H) A : ℝ≥0∞) := by
       apply Finset.sum_le_sum
       intro A _
       exact passingTreeCount_lintegral_le H A
@@ -1510,11 +1516,13 @@ lemma induced_edge_partition {n : ℕ} (H : SimpleGraph (Fin n))
   have hunion : (inducedBlowup H S).edgeFinset ∪
       (inducedComplement H S).edgeFinset =
         (withinCluster S)ᶜ.edgeFinset := by
-    ext e
+    apply Finset.ext
+    intro e
+    rw [Finset.mem_union, SimpleGraph.mem_edgeFinset,
+      SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeFinset]
     induction e using Sym2.ind with
     | _ u v =>
-        simp only [Finset.mem_union, SimpleGraph.mem_edgeFinset,
-          SimpleGraph.mem_edgeSet, inducedBlowup, inducedComplement,
+        simp only [SimpleGraph.mem_edgeSet, inducedBlowup, inducedComplement,
           SimpleGraph.induce_adj, blowup, SimpleGraph.comap_adj,
           SimpleGraph.compl_adj, withinCluster_adj_iff]
         constructor
@@ -1538,9 +1546,7 @@ lemma induced_edge_partition {n : ℕ} (H : SimpleGraph (Fin n))
           · exact Or.inr ⟨hfirst, hadj⟩
   have hcard := congrArg Finset.card hunion
   rw [Finset.card_union_of_disjoint hdis] at hcard
-  rw [card_edgeFinset_eq_ncard, card_edgeFinset_eq_ncard,
-    card_edgeFinset_eq_ncard] at hcard ⊢
-  exact hcard
+  simpa only [card_edgeFinset_eq_ncard] using hcard
 
 lemma inducedBlowup_edge_card_eq_queryScope {n : ℕ}
     (H : SimpleGraph (Fin n)) (S : Finset (BlowupVertex n)) :
@@ -1550,31 +1556,11 @@ lemma inducedBlowup_edge_card_eq_queryScope {n : ℕ}
   have hmap := SimpleGraph.map_edgeFinset_induce
     (s := (S : Set (BlowupVertex n))) (G := blowup H)
   have hcard := congrArg Finset.card hmap
-  rw [Finset.card_map, card_edgeFinset_eq_ncard,
-    ← Set.ncard_coe_finset] at hcard
-  simp only [Finset.coe_inter, SimpleGraph.coe_edgeFinset,
-    Finset.coe_sym2, Set.coe_toFinset] at hcard
+  rw [Finset.card_map, card_edgeFinset_eq_ncard] at hcard
   rw [card_edgeFinset_eq_ncard]
-  calc
-    (inducedBlowup H S).edgeSet.ncard =
-        ((blowup H).edgeSet ∩ (S : Set (BlowupVertex n)).sym2).ncard := by
-      simpa only [inducedBlowup] using hcard
-    _ = ((variablesOf H (Sum.inr S) : Finset (EdgeVariable n)) :
-        Set (EdgeVariable n)).ncard := by
-      apply congrArg Set.ncard
-      ext e
-      simp only [Set.mem_inter_iff, Finset.mem_coe,
-        variablesOf, Finset.mem_inter, SimpleGraph.mem_edgeFinset]
-      constructor
-      · rintro ⟨he, hS⟩
-        refine ⟨he, ?_⟩
-        change e ∈ (S.sym2 : Set (EdgeVariable n))
-        rwa [Finset.coe_sym2]
-      · rintro ⟨he, hS⟩
-        refine ⟨he, ?_⟩
-        rw [← Finset.coe_sym2]
-        exact hS
-    _ = (variablesOf H (Sum.inr S)).card := Set.ncard_coe_finset _
+  change (SimpleGraph.induce (S : Set (BlowupVertex n))
+    (blowup H)).edgeSet.ncard = _ at hcard ⊢
+  simpa [variablesOf] using hcard
 
 lemma inducedBlowup_edge_ncard_eq_queryScope {n : ℕ}
     (H : SimpleGraph (Fin n)) (S : Finset (BlowupVertex n)) :
@@ -1589,7 +1575,7 @@ lemma indepNum_pos_of_nonempty {n : ℕ} (H : SimpleGraph (Fin n))
   let v : Fin n := ⟨0, hn⟩
   have hsingle : H.IsIndepSet ({v} : Finset (Fin n)) := by simp
   have hcard := hsingle.card_le_indepNum
-  simpa using hcard
+  exact Nat.succ_le_iff.mp hcard
 
 /-- Every sufficiently large prospective independent set asks for quadratically
 many sampled edges.  This is the weighted Turán estimate used in the paper's
@@ -1888,7 +1874,7 @@ lemma soundness_family_weight_le_quarter {n : ℕ}
     ((soundnessFamily H).card : NNReal) *
         (1 / 2 : NNReal) ^ soundnessBlocks H ≤
       (2 : NNReal) ^ e * (1 / 2 : NNReal) ^ soundnessBlocks H :=
-        mul_le_mul_right' hfamilyNN _
+        by gcongr
     _ = (1 / 2 : NNReal) ^ e := by
       rw [hblocks]
       exact hcancel
@@ -2056,9 +2042,9 @@ lemma runCounts_eq_of_log_none_of_le {n : ℕ} (H : SimpleGraph (Fin n))
   induction d with
   | zero => simp
   | succ d ih =>
-      rw [Nat.add_succ, Lax41Proofs.runCounts_succ,
+      rw [Nat.add_succ, Lax296731Proofs.runCounts_succ,
         ih (Nat.le_add_right a d)]
-      have hnone := Lax41Proofs.resamplingLog_eq_none_of_le
+      have hnone := Lax296731Proofs.resamplingLog_eq_none_of_le
         (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
         (selectionRule H) table (Nat.le_add_right a d) ha
       simp [advanceCounts, hnone]
@@ -2111,7 +2097,7 @@ lemma resamplingRounds_le_resamplingSteps_of_log_some {n : ℕ}
         simp [term, hB, Ne.symm hne]
       · simp
     · have htlt : t < B := lt_of_le_of_ne htB heq
-      obtain ⟨A, hA⟩ := Lax41Proofs.resamplingLog_eq_some_of_lt_of_some
+      obtain ⟨A, hA⟩ := Lax296731Proofs.resamplingLog_eq_some_of_lt_of_some
         (fun _ : EdgeVariable n ↦ Bool) (badVariables H) (badSet H)
         (selectionRule H) table hB htlt
       rw [Finset.sum_eq_single A]
@@ -2285,4 +2271,4 @@ theorem truncatedGraph_soundness_failure_le_third (n : ℕ) (hn : 3 ≤ n)
 
 end
 
-end Lax47Proofs.Construction
+end Lax405409Proofs.Construction

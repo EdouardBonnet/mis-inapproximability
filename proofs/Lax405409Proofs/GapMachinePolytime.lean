@@ -1,5 +1,5 @@
-import Lax47Proofs.GapMachineBounded
-import Lax51Proofs.TuringRamPolytimeEquivalence
+import Lax405409Proofs.GapMachineBounded
+import Lax759944Proofs.TuringRamPolytimeEquivalence
 
 /-!
 Polynomial resource bounds and the final verified IMP+-to-RAM-to-finite-TM
@@ -9,19 +9,19 @@ bridge for the gap function.
 set_option autoImplicit false
 set_option maxHeartbeats 4000000
 
-namespace Lax47Proofs.GapMachine
+namespace Lax405409Proofs.GapMachine
 
-open Lax47.Machine Lax47.Complexity Lax47.Gap
-open Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.OperationalReduction
-open Lax47Proofs.FiniteExecution
-open Lax47Proofs.RamReductionCorrectness
-open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
-open Lax13Proofs.Compile Lax13Proofs.Simulation Lax13.Ram
-open Lax51.BinaryWordEncoding Lax51.RamPolytime Lax51.TuringPolytime
-open Lax51Proofs.TMToRam
+open Lax405409.Machine Lax405409.Complexity Lax405409.Gap
+open Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.OperationalReduction
+open Lax405409Proofs.FiniteExecution
+open Lax405409Proofs.RamReductionCorrectness
+open Lax405409Proofs.RamReductionSemantics Lax405409Proofs.Redirect
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
+open Lax808846Proofs.Compile Lax808846Proofs.Simulation Lax808846.Ram
+open Lax759944.BinaryWordEncoding Lax759944.RamPolytime Lax759944.TuringPolytime
+open Lax759944Proofs.TMToRam
 open Polynomial
 
 lemma rawOrder_le_length (input : BitString) :
@@ -33,10 +33,10 @@ lemma inputMax_lt_two_pow (input : BitString) :
   induction input with
   | nil => simp [inputMax]
   | cons head tail ih =>
-      have headBound := Lax51Proofs.Encoding.mem_lt_two_pow_bitSize_add_one
+      have headBound := Lax759944Proofs.Encoding.mem_lt_two_pow_bitSize_add_one
         (x := head :: tail) (a := head) (by simp)
       have hsize : bitSize tail + 1 ≤ bitSize (head :: tail) + 1 := by
-        rw [Lax51Proofs.Encoding.bitSize_cons]
+        rw [Lax759944Proofs.Encoding.bitSize_cons]
         omega
       have tailBound : inputMax tail <
           2 ^ (bitSize (head :: tail) + 1) :=
@@ -55,7 +55,7 @@ lemma bitSize_le_two_length_of_le_one (values : BitString)
         exact hvalues value (by simp [membership])
       have ih' := ih htail
       interval_cases head <;>
-        simp [Lax51Proofs.Encoding.bitSize_cons] at ih' ⊢ <;> omega
+        simp [Lax759944Proofs.Encoding.bitSize_cons] at ih' ⊢ <;> omega
 
 lemma nat_bits_length_le_add_one (value : ℕ) :
     value.bits.length ≤ value + 1 := by
@@ -80,7 +80,7 @@ lemma graph_bits_bitSize_le {order : ℕ} (graph : GraphCode order) :
     simpa only [matrixLength] using matrixSize
   have orderBits := nat_bits_length_le_add_one order
   change bitSize (order :: matrix) ≤ _
-  rw [Lax51Proofs.Encoding.bitSize_cons]
+  rw [Lax759944Proofs.Encoding.bitSize_cons]
   have hbase : 1 ≤ order + 1 := by omega
   have horder : order ≤ (order + 1) ^ 2 := by
     calc
@@ -101,7 +101,7 @@ lemma reduction_graph_bitSize_le (input : BitString) :
   have htarget := graph_bits_bitSize_le target
   have hn : n ≤ bitSize input :=
     (rawOrder_le_length input).trans
-      (Lax51Proofs.Encoding.length_le_bitSize input)
+      (Lax759944Proofs.Encoding.length_le_bitSize input)
   have hbase : n + 1 ≤ bitSize input + 1 := by omega
   have hpow : (n + 1) ^ 4 ≤ (bitSize input + 1) ^ 4 :=
     pow_le_pow_left' hbase 4
@@ -211,7 +211,7 @@ noncomputable def graphSizePolynomial : Polynomial ℕ :=
     graphSizePolynomial.eval size = 30 * (size + 1) ^ 4 := by
   simp [graphSizePolynomial]
 
-/-- Lax51's native approximation cost, with its input-size polynomial
+/-- Lax759944's native approximation cost, with its input-size polynomial
 composed with the polynomial size of the generated graph. -/
 noncomputable def approximationCostPolynomial {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) : Polynomial ℕ :=
@@ -261,7 +261,7 @@ theorem approximationNativeCost_polynomial {ε : ℝ}
     nlinarith
   have graphBound : graphSize ≤ graphSizePolynomial.eval (bitSize input) := by
     simpa [graphSize, graphBits] using reduction_graph_bitSize_le input
-  have monotone := Lax51Proofs.RamToTM.polynomial_eval_mono
+  have monotone := Lax759944Proofs.RamToTM.polynomial_eval_mono
     sourcePolynomial graphBound
   calc
     approximationNativeCost algorithm (rawReductionGraphBits input)
@@ -290,7 +290,7 @@ theorem gapCom_cost_polynomial (q : ℕ) {ε : ℝ}
       cost ≤ (gapTimePolynomial q algorithm).eval (bitSize input) := by
   obtain ⟨ext, final, cost, run, output, costBound⟩ :=
     gapCom_bigStep q algorithm input
-  have hlength := Lax51Proofs.Encoding.length_le_bitSize input
+  have hlength := Lax759944Proofs.Encoding.length_le_bitSize input
   have horder : rawOrder input ≤ bitSize input :=
     (rawOrder_le_length input).trans hlength
   have hreduction := reductionCostBound_polynomial input.length
@@ -321,7 +321,7 @@ lemma input_getD_one_lt_two_pow (input : BitString) :
     input.getD 1 0 < 2 ^ (bitSize input + 1) := by
   by_cases hindex : 1 < input.length
   · rw [List.getD_eq_getElem input 0 hindex]
-    exact Lax51Proofs.Encoding.mem_lt_two_pow_bitSize_add_one
+    exact Lax759944Proofs.Encoding.mem_lt_two_pow_bitSize_add_one
       (List.getElem_mem hindex)
   · rw [List.getD_eq_default input 0 (by omega : input.length ≤ 1)]
     positivity
@@ -337,7 +337,7 @@ lemma reductionValueBound_le_two_pow (input : BitString) :
   have hx : 1 ≤ x := by omega
   have hn : n ≤ size :=
     (rawOrder_le_length input).trans
-      (Lax51Proofs.Encoding.length_le_bitSize input)
+      (Lax759944Proofs.Encoding.length_le_bitSize input)
   have hnx : n + 1 ≤ x := by omega
   have hflat : flatRandomBitCount n ≤ 1400 * x ^ 12 := by
     exact (flatRandomBitCount_polynomial n).trans
@@ -382,7 +382,7 @@ lemma reductionValueBound_le_two_pow (input : BitString) :
   have hmax : inputMax input ≤ inputPower := by
     exact Nat.le_of_lt (by simpa [inputPower, size] using inputMax_lt_two_pow input)
   have hlength : input.length ≤ inputPower := by
-    have := Lax51Proofs.Encoding.length_lt_two_pow_bitSize_add_one input
+    have := Lax759944Proofs.Encoding.length_lt_two_pow_bitSize_add_one input
     exact Nat.le_of_lt (by simpa [inputPower, size] using this)
   have hclaimed : input.getD 1 0 ≤ inputPower := by
     exact Nat.le_of_lt (by simpa [inputPower, size] using
@@ -608,7 +608,7 @@ theorem gapCom_positive_bigStepB (q : ℕ) {ε : ℝ}
       have countTime : countCost ≤ timeBound := by
         have horderSize : n ≤ size :=
           (rawOrder_le_length input).trans
-            (Lax51Proofs.Encoding.length_le_bitSize input)
+            (Lax759944Proofs.Encoding.length_le_bitSize input)
         have hsquare : n * n ≤ (size + 1) ^ 2 := by
           calc
             n * n = n ^ 2 := by ring
@@ -656,7 +656,7 @@ theorem gapCom_positive_bigStepB (q : ℕ) {ε : ℝ}
       have nSize : n < 2 ^ (size + 1) := by
         have nle : n ≤ size :=
           (rawOrder_le_length input).trans
-            (Lax51Proofs.Encoding.length_le_bitSize input)
+            (Lax759944Proofs.Encoding.length_le_bitSize input)
         exact nle.trans_lt (size.lt_two_pow_self.trans_le
           (Nat.pow_le_pow_right (by omega) (by omega)))
       have cardLe : card ≤ n * n := by
@@ -758,7 +758,7 @@ theorem gapCom_positive_bigStepB (q : ℕ) {ε : ℝ}
         exact BigStepB.seq preludeGlobal (BigStepB.seq decodeGlobal
           (BigStepB.ite_false conditionFalse positiveBounded))
       have totalTime : totalCost ≤ timeBound := by
-        have hlength := Lax51Proofs.Encoding.length_le_bitSize input
+        have hlength := Lax759944Proofs.Encoding.length_le_bitSize input
         have horderSize : n ≤ size :=
           (rawOrder_le_length input).trans hlength
         have redPoly := reductionCostBound_polynomial input.length n size
@@ -867,7 +867,7 @@ theorem gapCom_zero_bigStepB (q : ℕ) {ε : ℝ}
   have wholeBounded := bigStepBMono Bglobal wholeAtB
   refine ⟨ext, final, totalCost, wholeBounded, ?_, ?_⟩
   · simp [final, decodeOut, gapFunction, hzero]
-  · have hlength := Lax51Proofs.Encoding.length_le_bitSize input
+  · have hlength := Lax759944Proofs.Encoding.length_le_bitSize input
     have localCost : totalCost ≤ 12 * input.length + 100 := by
       dsimp only [totalCost]
       simp only [Cond.size, Expr.size]
@@ -902,7 +902,7 @@ lemma gapFunction_mem_le_one (q : ℕ) {ε : ℝ}
   · split at membership <;> simp_all
 
 /-- The verified IMP+ implementation compiles to one uniform word-RAM
-program with polynomial resources.  The RAM is used only as Lax51's grounded
+program with polynomial resources.  The RAM is used only as Lax759944's grounded
 intermediate machine model. -/
 theorem gapFunction_ramPolytime (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) :
@@ -935,11 +935,11 @@ theorem gapFunction_ramPolytime (q : ℕ) {ε : ℝ}
     rcases membership with inputMembership | outputMembership
     · rcases List.mem_cons.mp inputMembership with rfl | inputMembership
       · have bound :=
-          Lax51Proofs.Encoding.length_lt_two_pow_bitSize_add_one input
+          Lax759944Proofs.Encoding.length_lt_two_pow_bitSize_add_one input
         exact bound.trans_le (Nat.pow_le_pow_right (by omega)
           (exponentLarge.trans exponentWord))
       · have bound :=
-          Lax51Proofs.Encoding.mem_lt_two_pow_bitSize_add_one inputMembership
+          Lax759944Proofs.Encoding.mem_lt_two_pow_bitSize_add_one inputMembership
         exact bound.trans_le (Nat.pow_le_pow_right (by omega)
           (exponentLarge.trans exponentWord))
     · have valueLe := gapFunction_mem_le_one q algorithm input outputMembership
@@ -958,9 +958,9 @@ theorem gapFunction_ramPolytime (q : ℕ) {ε : ℝ}
         value < 2 ^ exponent := by
       intro value membership
       rcases List.mem_cons.mp membership with rfl | membership
-      · exact (Lax51Proofs.Encoding.length_lt_two_pow_bitSize_add_one input).trans_le
+      · exact (Lax759944Proofs.Encoding.length_lt_two_pow_bitSize_add_one input).trans_le
           (Nat.pow_le_pow_right (by omega) exponentLarge)
-      · exact (Lax51Proofs.Encoding.mem_lt_two_pow_bitSize_add_one membership).trans_le
+      · exact (Lax759944Proofs.Encoding.mem_lt_two_pow_bitSize_add_one membership).trans_le
           (Nat.pow_le_pow_right (by omega) exponentLarge)
     obtain ⟨time, timeCost, ramRun⟩ := compileProgram_runsTo layoutFits
       (by simpa [layout, cmd] using comCanonicalLayoutOk cmd)
@@ -974,11 +974,11 @@ theorem gapFunction_ramPolytime (q : ℕ) {ε : ℝ}
     · simpa [cmd, output] using ramRun
 
 /-- The gap function is computed by an actual finite Turing machine with a
-polynomial transition bound, via Lax51's verified machine equivalence. -/
+polynomial transition bound, via Lax759944's verified machine equivalence. -/
 theorem gapFunction_turingPolytime (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) :
     TuringPolytime (gapFunction q algorithm) :=
-  (Lax51Proofs.TuringRamPolytimeEquivalence.ramPolytime_iff_turingPolytime
+  (Lax759944Proofs.TuringRamPolytimeEquivalence.ramPolytime_iff_turingPolytime
     (gapFunction q algorithm)).mp (gapFunction_ramPolytime q algorithm)
 
-end Lax47Proofs.GapMachine
+end Lax405409Proofs.GapMachine

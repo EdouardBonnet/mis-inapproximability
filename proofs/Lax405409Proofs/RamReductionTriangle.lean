@@ -1,4 +1,4 @@
-import Lax47Proofs.RamReductionSemantics
+import Lax405409Proofs.RamReductionSemantics
 
 /-!
 Context-preserving semantic specifications and correctness of the complete
@@ -8,12 +8,12 @@ triangle predicate for the fixed IMP+ reduction.
 set_option autoImplicit false
 set_option maxHeartbeats 1000000
 
-namespace Lax47Proofs.RamReductionSemantics
+namespace Lax405409Proofs.RamReductionSemantics
 
-open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax405409.Machine Lax405409.Complexity Lax405409Proofs Lax405409Proofs.Reduction
+open Lax405409Proofs.FlatReduction Lax405409Proofs.RamReduction
+open Lax405409Proofs.RamReductionCorrectness
+open Lax808846Proofs.Imp Lax808846Proofs.Reasoning Lax405409Proofs.Codegen
 
 /-! ### Context-preserving elementary tests -/
 
@@ -579,4 +579,4 @@ theorem testCurrentTriple_spec (B : ℕ) {n rank : ℕ}
         (runSampleThree.seq Run.skip)))))))).mono (by omega)
   · rcases postFinal with ⟨hcontext, hdecoded, hok⟩
     exact ⟨hcontext, hdecoded, hok.trans hfinalValue⟩
-end Lax47Proofs.RamReductionSemantics
+end Lax405409Proofs.RamReductionSemantics
