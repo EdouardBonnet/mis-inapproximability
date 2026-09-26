@@ -1,15 +1,16 @@
 import Lax47Proofs.ProofSupport
-import Lax41.MoserTardosDefinitions
+import Lax296731.MoserTardosDefinitions
 import Mathlib.Combinatorics.SimpleGraph.Clique
 import Mathlib.Probability.ProductMeasure
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 open scoped ENNReal
 
 namespace Lax47Proofs.Reduction
 
-open Lax41.MoserTardosDefinitions
+open Lax296731.MoserTardosDefinitions
 open Lax47.Complexity
 
 /-- Vertices of the complete $n$-fold blow-up. -/

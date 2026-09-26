@@ -1,6 +1,7 @@
 import Lax47.Gap
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs
 

@@ -1,29 +1,31 @@
 import Lax47.Gap
+import Lax434930.NondeterministicPolynomialTime
+import Lax666725.RandomizedPolynomialTime
 
 /-!
 ---
 title: Håstad's inapproximability of Max Independent Set
-type: definition
+type: theorem
 ---
-Håstad's general-graph inapproximability result supplies the hardness premise
-used by the reduction.  We use its equivalent rational promise-gap form.  For
+Håstad's general-graph inapproximability result supplies the hardness theorem
+used by the reduction. We use its rational promise-gap form. For
 every integer $q>2$, a bounded-error polynomial-step algorithm distinguishing
 $n$-vertex graphs $H$ with $\alpha(H)\leq n^{1/q}$ from those with
 $n^{1-1/q}\leq\alpha(H)$ would imply $NP\subseteq BPP$.
 
-This concept only defines that premise. It does not assert Håstad's result as
-an archive axiom; the main theorem of this submission is the implication from
-this premise to the triangle-free inapproximability conclusion.
+This result is assumed without proof.
 -/
 
 set_option autoImplicit false
 
 namespace Lax47.Hastad
 
-open Lax47.Machine Lax47.Gap
+open Lax47.Gap
+open Lax434930.NondeterministicPolynomialTime
+open Lax666725.RandomizedPolynomialTime
 
-/-- Håstad's general-graph promise-gap inapproximability premise. -/
-def Inapproximability : Prop :=
-  ∀ q : ℕ, 3 ≤ q → MISGapSolver q → NPSubsetBPP
+/-- Håstad's general-graph promise-gap inapproximability theorem. -/
+axiom inapproximability :
+  ∀ q : ℕ, 3 ≤ q → MISGapSolver q → NP ⊆ BPP
 
 end Lax47.Hastad

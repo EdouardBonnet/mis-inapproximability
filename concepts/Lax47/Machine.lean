@@ -1,12 +1,12 @@
-import Lax51.TuringPolytime
+import Lax759944.TuringPolytime
 
 /-!
 ---
-title: Polynomial-time computation on the Lax51 finite-Turing model
+title: Polynomial-time computation on the Lax759944 finite-Turing model
 type: definition
 ---
 All algorithms in this submission compute total functions on finite words of
-natural numbers.  Polynomial time is exactly Lax51's predicate: a fixed
+natural numbers.  Polynomial time is exactly Lax759944's predicate: a fixed
 finite multi-stack Turing machine transforms the canonical binary encoding of
 the input word into the canonical binary encoding of its output within a
 polynomial number of transitions.
@@ -20,7 +20,7 @@ set_option autoImplicit false
 
 namespace Lax47.Machine
 
-open Lax51.BinaryWordEncoding Lax51.TuringPolytime
+open Lax759944.BinaryWordEncoding Lax759944.TuringPolytime
 
 /-- A finite machine word.  Boolean data use the entries $0$ and $1$. -/
 abbrev BitString := List ℕ
@@ -53,47 +53,5 @@ def bitWord (bit : Bool) : ℕ :=
 /-- The word representation of a fixed-length random seed. -/
 def RandomSeed.bits {r : ℕ} (seed : RandomSeed r) : BitString :=
   (List.ofFn seed).map bitWord
-
-/-- A decision problem over finite words. -/
-abbrev Language := Set BitString
-
-/-- A polynomial-time verifier whose certificate binary size is polynomially bounded. -/
-structure NPVerifier (language : Language) where
-  program : PolytimeProgram
-  certificateConstant : ℕ
-  certificateExponent : ℕ
-  certificateConstant_pos : 0 < certificateConstant
-  correctness : ∀ input : BitString,
-    input ∈ language ↔ ∃ certificate : BitString,
-      bitSize certificate ≤ polynomialBound
-        certificateConstant certificateExponent (bitSize input) ∧
-      program.output (pairBits input certificate) = [1]
-
-/-- Membership in $NP$ in the Lax51 finite-Turing model. -/
-def InNP (language : Language) : Prop :=
-  Nonempty (NPVerifier language)
-
-/-- A polynomial-time randomized decision program using polynomially many uniform bits. -/
-structure BPPAlgorithm (language : Language) where
-  program : PolytimeProgram
-  randomnessConstant : ℕ
-  randomnessExponent : ℕ
-  randomnessConstant_pos : 0 < randomnessConstant
-  correctness : ∀ input : BitString,
-    let randomBitCount := polynomialBound
-      randomnessConstant randomnessExponent (bitSize input)
-    let seeds : Finset (RandomSeed randomBitCount) := Finset.univ
-    let accepting := seeds.filter fun seed ↦
-      program.output (pairBits input seed.bits) = [1]
-    (input ∈ language → 2 * seeds.card ≤ 3 * accepting.card) ∧
-      (input ∉ language → 3 * accepting.card ≤ seeds.card)
-
-/-- Membership in $BPP$ in the same finite-Turing model. -/
-def InBPP (language : Language) : Prop :=
-  Nonempty (BPPAlgorithm language)
-
-/-- The complexity-class inclusion appearing in the inapproximability theorem. -/
-def NPSubsetBPP : Prop :=
-  ∀ language : Language, InNP language → InBPP language
 
 end Lax47.Machine

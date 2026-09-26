@@ -1,12 +1,12 @@
 import Lax47Proofs.FlatReduction
-import Lax51Proofs.TMToRam.NativeBounded
-import Lax51Proofs.TuringRamPolytimeEquivalence
-import Lax13Proofs.Refine.Codegen.Harness
+import Lax759944Proofs.TMToRam.NativeBounded
+import Lax759944Proofs.LegacyRamClasses
+import Lax47Proofs.InputHarness
 
 /-!
 The reduction used by the gap solver is implemented here as one fixed IMP+
-program.  IMP+ has a grounded compiler to the Lax13 word RAM, and Lax51 has a
-grounded polynomial-overhead simulation from that RAM to a finite Turing
+program. IMP+ has a verified compiler to the legacy word RAM retained by
+Lax759944, with a polynomial-overhead simulation from that RAM to a finite Turing
 machine.  Thus every cost below is attached to an actual execution trace.
 
 The machine copies its length-prefixed logical input into `raw`, caps the
@@ -17,14 +17,15 @@ computed from the capped order.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs.RamReduction
 
 open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction
-open Lax13Proofs.Imp
-open Lax13Proofs.Reasoning
-open Lax13Proofs.Codegen
+open Lax759944Proofs.Legacy.Imp
+open Lax759944Proofs.Legacy.Reasoning
+open Lax47Proofs.InputHarness
 
 /-! ### Fixed names and small syntax combinators -/
 

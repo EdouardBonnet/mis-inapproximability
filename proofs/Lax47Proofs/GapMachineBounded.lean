@@ -1,14 +1,15 @@
 import Lax47Proofs.GapMachineRun
-import Lax51Proofs.TMToRam.InterpreterTame
+import Lax759944Proofs.TMToRam.InterpreterTame
 
 /-!
 Word bounds for the composed IMP+ program.  The reduction already carries
 bounded semantics.  Only the redirected native interpreter and the final
-linear scan use Lax51's generic bit-growth theorem; the fixed power test is
+linear scan use Lax759944's generic bit-growth theorem; the fixed power test is
 bounded directly.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 3000000
 
 namespace Lax47Proofs.GapMachine
@@ -18,9 +19,9 @@ open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
-open Lax51.BinaryWordEncoding
-open Lax51Proofs.TMToRam
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
+open Lax759944.BinaryWordEncoding
+open Lax759944Proofs.TMToRam
 
 /-- Bounded IMP+ execution preserves a common strict bound on all values in
 the environment. -/

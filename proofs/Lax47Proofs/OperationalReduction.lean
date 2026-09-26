@@ -9,12 +9,13 @@ the imported resampling and distributional theorems.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs.OperationalReduction
 
 open Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
-open Lax41.MoserTardosDefinitions
-open Lax41.HaeuplerSahaSrinivasanDefinitions
+open Lax296731.MoserTardosDefinitions
+open Lax296731.HaeuplerSahaSrinivasanDefinitions
 open Lax47Proofs.Construction Lax47Proofs.FiniteExecution
 
 /-! ### The finite seed used by the implementation -/
@@ -266,7 +267,7 @@ lemma executeRounds_counts_eq_runCounts {n : ℕ} (input : GraphCode n)
   induction round with
   | zero => rfl
   | succ round ih =>
-      rw [Lax41Proofs.runCounts_succ]
+      rw [Lax296731Proofs.runCounts_succ]
       simp only [executeRounds]
       rw [ih]
       exact advanceCounts_eq_execution input seed _ |>.symm

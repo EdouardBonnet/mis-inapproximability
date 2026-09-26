@@ -1,16 +1,17 @@
 import Lax47Proofs.RamReductionFull
 import Lax47.Gap
-import Lax51Proofs.RamToTM.PolynomialBounds
+import Lax759944Proofs.RamToTM.PolynomialBounds
 
 /-!
 The complete Håstad-gap solver is one ordinary IMP+ program.  Its first
 phase is the verified finite Moser--Tardos reduction.  Its second phase is
-the Lax51 native interpreter for the supplied approximation Turing machine,
+the Lax759944 native interpreter for the supplied approximation Turing machine,
 with input and output redirected to finite arrays.  The last two phases count
 the returned vertices and perform the fixed rational threshold comparison.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 2000000
 
 namespace Lax47Proofs.GapMachine
@@ -20,9 +21,9 @@ open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
-open Lax13Proofs.Compile Lax13Proofs.Simulation Lax13.Ram
-open Lax51.BinaryWordEncoding Lax51.RamPolytime Lax51.TuringPolytime
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
+open Lax759944Proofs.Legacy.Compile Lax759944Proofs.Legacy.Simulation Lax759944Proofs.Legacy.Ram
+open Lax759944.BinaryWordEncoding Lax759944Proofs.Legacy.RamPolytime Lax759944.TuringPolytime
 open Polynomial
 
 def outputCardVar : String := "r.outputCard"
@@ -185,7 +186,7 @@ theorem countAlgorithmOutputBody_bigStep (bits : BitString) (limit : ℕ)
     · constructor
       · change initial.vars outputIndexVar + 1 ≤ limit
         omega
-      · simpa [final, Env.setVar] using invariant.blowup
+      · simpa [final, Env.setVar, blowupVar, outputIndexVar] using invariant.blowup
       · simpa [final, Env.setVar] using invariant.array
       · have hvalue' : bits[initial.vars outputIndexVar]?.getD 0 ≠ 1 := by
           simpa [value, index] using hvalue
@@ -248,7 +249,8 @@ theorem countAlgorithmOutput_bigStep (bits : BitString) (limit : ℕ)
   have hprepared : CountInvariant bits limit prepared := by
     constructor
     · simp [prepared, afterCard, Env.setVar, outputIndexVar]
-    · simpa [prepared, afterCard, Env.setVar] using hblowup
+    · simpa [prepared, afterCard, Env.setVar, blowupVar, outputCardVar,
+        outputIndexVar] using hblowup
     · simpa [prepared, afterCard, Env.setVar] using harray
     · simp [prepared, afterCard, Env.setVar, outputCardVar, outputIndexVar,
         oneCount]
@@ -368,7 +370,7 @@ noncomputable def approximationWitness {ε : ℝ}
     Turing.TM2ComputableInPolyTime encode encode algorithm.program.function :=
   Classical.choice algorithm.program.polytime
 
-open Lax51Proofs.TMToRam in
+open Lax759944Proofs.TMToRam in
 noncomputable def approximationNativeCom {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) : Com :=
   let H := approximationWitness algorithm
@@ -388,7 +390,7 @@ noncomputable def approximationNativeCom {ε : ℝ}
   FinTM2.compileNativeMachine tm inputStack outputStack separatorIn zeroIn oneIn
     separatorOut zeroOut oneOut initialStateCode mainLabelCode
 
-open Lax51Proofs.TMToRam in
+open Lax759944Proofs.TMToRam in
 noncomputable def approximationNativeCost {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε)
     (input output : BitString) : ℕ :=
@@ -413,7 +415,7 @@ theorem approximationNativeCom_bigStep {ε : ℝ}
   let H := approximationWitness algorithm
   have hrun := H.outputsFun input
   obtain ⟨ext, final, cost, bounded, hcost, hout⟩ :=
-    Lax51Proofs.TMToRam.FinTM2.compileNativeMachine_outputsInTime_bounded
+    Lax759944Proofs.TMToRam.FinTM2.compileNativeMachine_outputsInTime_bounded
       H.tm H.inputAlphabet H.outputAlphabet input
       (algorithm.program.output input) (H.time.eval (bitSize input)) hrun
   refine ⟨ext, final, cost, ?_, hout, ?_⟩

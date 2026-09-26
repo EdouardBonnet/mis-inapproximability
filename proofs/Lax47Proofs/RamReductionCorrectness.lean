@@ -3,17 +3,18 @@ import Lax47Proofs.Redirect
 /-!
 Correctness and resource bounds for the fixed IMP+ implementation of the
 finite Moser--Tardos reduction.  The specifications in this file are about
-the actual IMP+ execution relation used by the Lax13 compiler.
+the IMP+ execution relation used by Lax759944's legacy compiler.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionCorrectness
 
 open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
 
 /-- The copied input is retained throughout every reduction phase. -/
 def HasRawInput (input : BitString) (state : Env) : Prop :=

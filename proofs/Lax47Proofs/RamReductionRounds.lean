@@ -5,6 +5,7 @@ The fixed polynomially bounded sequence of resampling rounds.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionSemantics
@@ -12,7 +13,7 @@ namespace Lax47Proofs.RamReductionSemantics
 open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
 
 lemma advanceExecutionCounts_le_succ {n : ℕ}
     (counts : EdgeVariable n → ℕ) (selection : Option (ExecutionTriple n))

@@ -6,6 +6,7 @@ Construction of the encoded output graph after the bounded resampling run.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 1000000
 
 namespace Lax47Proofs.RamReductionSemantics
@@ -13,7 +14,7 @@ namespace Lax47Proofs.RamReductionSemantics
 open Lax47.Machine Lax47.Complexity Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
 
 def HasOutputPair {n : ℕ} (left right : Fin (n * n)) (state : Env) : Prop :=
   let u := decodeBlowupVertex left
@@ -570,7 +571,7 @@ theorem outputLoopBody_spec (B : ℕ) {n : ℕ}
           _ = targetBit := by
             dsimp [targetBit, target, seed]
             exact htarget.symm
-      · simpa [final, Env.setVar, outputIndexVar, okVar] using indexDecode
+      · simpa [final, Env.setVar, i, outputIndexVar, okVar] using indexDecode
       · simpa [final, Env.setVar] using graphDecode
       · simpa [final, Env.setVar, haltedVar, okVar] using haltedDecode
       · have hzero : targetBit = 0 := by
@@ -817,7 +818,7 @@ theorem buildOutputGraph_spec (B : ℕ) {n : ℕ}
       dsimp [totalCost]
       omega
     have hrun := runAll.mono (K' := totalCost) hcost
-    simpa [totalCost, bodyCost, sampleCost, count] using hrun
+    simpa [outputLoop, setZero, totalCost, bodyCost, sampleCost, count] using hrun
   · simpa [counts, seed] using contextFinal
   · simpa [seed] using haltedFinal
 

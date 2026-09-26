@@ -1,8 +1,9 @@
-import Lax47.Hastad
+import Lax47.Gap
 import Lax47Proofs.GapMachinePolytime
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs.GapTransfer
 
@@ -178,7 +179,7 @@ theorem executionSeed_soundness_failure_card_le_third
       ((Finset.univ : Finset (ExecutionSeed n)).filter fun seed ↦
         40000 * input.graph.indepNum * n * Real.log n <
           ((executionOutput input seed).graph.indepNum : ℝ)).card := by
-    simpa only [finiteSeedEquivExecution] using hbad
+    convert hbad using 1 <;> rfl
   rw [hbad'] at hfinite
   exact hfinite.trans_eq (by
     simpa only [Finset.card_univ] using htotal)
@@ -833,7 +834,8 @@ theorem machineGapProgram_soundness (q : ℕ) (hq : 0 < q) {ε : ℝ}
       Nat.mul_le_mul_left 3 (Finset.card_le_card hsubset)
     _ ≤ (program.seeds n).card := by
       simpa only [program, machineGapProgram, failures, predicate,
-        GapProgram.seeds, Finset.card_univ] using polynomialFailure
+        GapProgram.seeds, GapProgram.Seed, GapProgram.randomBitCount,
+        PolynomialExecutionSeed, Finset.card_univ] using polynomialFailure
 
 /-- A cutoff after which the logarithmic loss fits below $n^{2/q}$. -/
 noncomputable def gapCutoff (q : ℕ) (hq : 0 < q) : ℕ :=

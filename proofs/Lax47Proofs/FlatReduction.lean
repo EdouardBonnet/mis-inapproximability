@@ -10,6 +10,7 @@ bits remain independent and do not change any probability.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs.FlatReduction
 
@@ -172,7 +173,7 @@ lemma rawOrder_pairBits {n r : ℕ} (input : GraphCode n)
   have hget :
       (input.bits.length :: input.bits ++ seed.bits).getD 1 0 =
         (input.bits ++ seed.bits).getD 0 0 := by
-    simpa only [Nat.zero_add] using
+    simpa only [Nat.zero_add, List.cons_append] using
       (List.getD_cons_succ (x := input.bits.length)
         (xs := input.bits ++ seed.bits) (n := 0) (d := 0))
   rw [hget]
@@ -535,7 +536,7 @@ lemma flatRandomBitCount_polynomial (n : ℕ) :
     have hbase : 1 ≤ (n + 1) ^ 6 := Nat.one_le_pow _ _ (by omega)
     omega
   have hbits : executionSampleBits n ≤ 101 * (n + 1) := by
-    simpa only [executionSampleBits] using sampleBits_le_linear n
+    simpa only [executionSampleBits, Construction.sampleBits] using sampleBits_le_linear n
   unfold flatRandomBitCount
   calc
     blowupOrder n * blowupOrder n * (executionBudget n + 1) *

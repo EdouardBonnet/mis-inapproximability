@@ -6,6 +6,7 @@ import Lax47Proofs.GapMachineBounded
 import Lax47Proofs.GapMachinePolytime
 import Lax47Proofs.GapMachineRun
 import Lax47Proofs.GapTransfer
+import Lax47Proofs.InputHarness
 import Lax47Proofs.Main
 import Lax47Proofs.OperationalReduction
 import Lax47Proofs.ProofSupport

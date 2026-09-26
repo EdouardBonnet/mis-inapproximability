@@ -2,11 +2,12 @@ import Lax47Proofs.GapMachine
 
 /-!
 Plain IMP+ execution of the complete gap machine.  This is the semantic
-seam between the already verified reduction, Lax51's native simulation of
+seam between the already verified reduction, Lax759944's native simulation of
 the supplied approximation machine, and the elementary final passes.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 set_option maxHeartbeats 3000000
 
 namespace Lax47Proofs.GapMachine
@@ -16,7 +17,7 @@ open Lax47Proofs Lax47Proofs.Reduction
 open Lax47Proofs.FlatReduction Lax47Proofs.RamReduction
 open Lax47Proofs.RamReductionCorrectness
 open Lax47Proofs.RamReductionSemantics Lax47Proofs.Redirect
-open Lax13Proofs.Imp Lax13Proofs.Reasoning Lax13Proofs.Codegen
+open Lax759944Proofs.Legacy.Imp Lax759944Proofs.Legacy.Reasoning Lax47Proofs.InputHarness
 
 /-- Maximum entry in a finite input word. -/
 def inputMax : BitString → ℕ
@@ -185,7 +186,7 @@ theorem reductionCom_raw_bigStep (sourceExt : String → ℕ)
   simpa [reductionCostBound] using hcost
 
 /-- End-to-end execution on the nonzero branch.  In particular, the call to
-the approximation is the actual Lax51 native machine run, redirected through
+the approximation is the actual Lax759944 native machine run, redirected through
 the graph and output arrays. -/
 theorem gapCom_positive_bigStep (q : ℕ) {ε : ℝ}
     (algorithm : TriangleFreeMISApproximation ε) (input : BitString)

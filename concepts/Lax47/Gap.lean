@@ -5,7 +5,7 @@ import Lax47.Complexity
 title: Finite-Turing promise-gap algorithms for Max Independent Set
 type: definition
 ---
-The Håstad premise is stated only for functions certified by Lax51's genuine
+The Håstad premise is stated only for functions certified by Lax759944's genuine
 finite-Turing polynomial-time predicate.  A randomized program fixes constants
 $c,k$ and receives exactly $c(n+1)^k$ uniform bits on an $n$-vertex input.
 There is no special constructor for the reduction and no detached step

@@ -1,7 +1,7 @@
 import Lax47Proofs.RamReduction
 
 /-!
-Lax51 compiles any supplied finite Turing machine to a native IMP+ command.
+Lax759944 compiles any supplied finite Turing machine to a native IMP+ command.
 This file gives a transparent syntactic adapter for that command.  Reads are
 served from the generated graph array and writes are captured in another
 array; all of the native command's names are prefixed.  The simulation theorem
@@ -9,10 +9,11 @@ below is structural on the actual IMP+ big-step derivation.
 -/
 
 set_option autoImplicit false
+set_option backward.isDefEq.respectTransparency false
 
 namespace Lax47Proofs.Redirect
 
-open Lax13Proofs.Imp
+open Lax759944Proofs.Legacy.Imp
 open Lax47Proofs.RamReduction
 
 def algorithmPrefix : String := "a."
@@ -79,7 +80,7 @@ def redirectCond : Cond → Cond
   | .eq left right => .eq (redirectExpr left) (redirectExpr right)
   | .lt left right => .lt (redirectExpr left) (redirectExpr right)
 
-/-- Virtual physical input expected by Lax51's native codec. -/
+/-- Virtual physical input expected by Lax759944's native codec. -/
 def virtualInput (graph : List ℕ) : List ℕ := graph.length :: graph
 
 /-- One virtualized read.  Cursor zero yields the physical length prefix;
@@ -157,7 +158,8 @@ lemma Rel.setVar {graph : List ℕ} {capacity : ℕ}
     simp [Env.setVar, relation.arrs]
   · simpa [Env.setVar, Ne.symm (algorithmName_ne_inputCursor name)] using
       relation.input_le
-  · simpa [Env.setVar] using relation.input_tape
+  · simpa [Env.setVar, Ne.symm (algorithmName_ne_inputCursor name)] using
+      relation.input_tape
   · simpa [Env.setVar] using relation.output_le
   · simpa [Env.setVar, Ne.symm (algorithmName_ne_outputCursor name)] using
       relation.output_cursor
@@ -324,7 +326,8 @@ lemma Rel.afterWrite {graph : List ℕ} {capacity : ℕ}
       algorithmName_ne_algorithmOutputArray queried, relation.arrs]
   · simpa [afterWriteTarget, Env.setVar, Env.setArr,
       inputCursor, outputCursor] using relation.input_le
-  · simpa [afterWriteTarget, afterWriteSource, Env.setVar, Env.setArr] using
+  · simpa [afterWriteTarget, afterWriteSource, Env.setVar, Env.setArr,
+      inputCursor, outputCursor] using
       relation.input_tape
   · simpa [afterWriteSource] using hroom
   · simp [afterWriteTarget, afterWriteSource, Env.setVar,

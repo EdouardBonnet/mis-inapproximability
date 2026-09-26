@@ -11,7 +11,7 @@ type: definition
 Graphs are finite Boolean adjacency matrices with symmetry and looplessness
 certificates.  Their machine word is the vertex count followed by the complete
 row-major matrix, with Booleans encoded by $0$ and $1$.  An approximation is a
-function certified polynomial-time by the Lax51 finite-Turing model; its
+function certified polynomial-time by the Lax759944 finite-Turing model; its
 returned independent set is decoded from that certified function.
 -/
 
@@ -22,8 +22,7 @@ namespace Lax47.Complexity
 open Lax47.Machine
 
 export Lax47.Machine
-  (BitString Language RandomSeed PolytimeProgram NPVerifier BPPAlgorithm
-    InNP InBPP NPSubsetBPP polynomialBound pairBits)
+  (BitString RandomSeed PolytimeProgram polynomialBound pairBits)
 
 /-- An executable simple graph on the labeled vertex set $\operatorname{Fin}(n)$. -/
 structure GraphCode (n : ℕ) where
@@ -34,10 +33,9 @@ structure GraphCode (n : ℕ) where
 /-- The mathematical simple graph represented by a Boolean adjacency matrix. -/
 def GraphCode.graph {n : ℕ} (code : GraphCode n) : SimpleGraph (Fin n) where
   Adj left right := code.adjacent left right = true
-  symm left right h := by
-    change code.adjacent right left = true
+  symm := ⟨fun left right h ↦ by
     rw [← code.symmetric]
-    exact h
+    exact h⟩
   loopless := ⟨fun vertex ↦ by
     simp [code.loopless]⟩
 
@@ -59,6 +57,11 @@ structure TriangleFreeMISApproximation (ε : ℝ) where
     let set := decodeVertexSet n (program.output code.bits)
     code.graph.IsIndepSet set ∧
       (code.graph.indepNum : ℝ) ≤
-        Real.rpow n ((1 : ℝ) / 2 - ε) * set.card
+      Real.rpow n ((1 : ℝ) / 2 - ε) * set.card
+
+/-- Max Independent Set on triangle-free graphs admits a polynomial-time
+$n^{1/2-\varepsilon}$-approximation. -/
+def TriangleFreeMISApproximable (ε : ℝ) : Prop :=
+  Nonempty (TriangleFreeMISApproximation ε)
 
 end Lax47.Complexity
