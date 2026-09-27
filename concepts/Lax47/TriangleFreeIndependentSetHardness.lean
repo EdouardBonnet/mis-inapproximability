@@ -17,7 +17,7 @@ hardness theorem and a randomized triangle-removal reduction.
 
 set_option autoImplicit false
 
-namespace Lax47.Theorem12
+namespace Lax47.TriangleFreeIndependentSetHardness
 
 open Lax47.Complexity
 open Lax434930.NondeterministicPolynomialTime
@@ -25,8 +25,8 @@ open Lax666725.RandomizedPolynomialTime
 
 /-- Unless $NP\subseteq BPP$, no polynomial-time $N^{1/2-\varepsilon}$
 approximation exists for Max Independent Set on triangle-free graphs. -/
-axiom theorem_1_2 :
+axiom not_approximable :
   ¬ NP ⊆ BPP →
     ∀ (ε : ℝ), 0 < ε → ¬ TriangleFreeMISApproximable ε
 
-end Lax47.Theorem12
+end Lax47.TriangleFreeIndependentSetHardness
