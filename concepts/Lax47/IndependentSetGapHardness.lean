@@ -13,7 +13,11 @@ every integer $q>2$, a bounded-error polynomial-step algorithm distinguishing
 $n$-vertex graphs $H$ with $\alpha(H)\leq n^{1/q}$ from those with
 $n^{1-1/q}\leq\alpha(H)$ would imply $NP\subseteq BPP$.
 
-This result is assumed without proof.
+This formulation is proved here from the registered PCP-to-clique reduction
+in lax-253009. The proof complements the graph, guards the relative threshold,
+handles graphs below the solver's cutoff by bounded exhaustive search, and
+certifies the encoding conversion and randomized composition in the finite
+Turing-machine models.
 -/
 
 set_option autoImplicit false

@@ -1,11 +1,17 @@
 import Lax47Proofs.Construction
 import Lax47Proofs.FiniteExecution
 import Lax47Proofs.FlatReduction
+import Lax47Proofs.GapComparison
+import Lax47Proofs.GapInput
 import Lax47Proofs.GapMachine
+import Lax47Proofs.GapMachineBridge
 import Lax47Proofs.GapMachineBounded
 import Lax47Proofs.GapMachinePolytime
 import Lax47Proofs.GapMachineRun
+import Lax47Proofs.GapTest
 import Lax47Proofs.GapTransfer
+import Lax47Proofs.GapWordEncoding
+import Lax47Proofs.IndependentSetGapHardness
 import Lax47Proofs.InputHarness
 import Lax47Proofs.Main
 import Lax47Proofs.OperationalReduction

@@ -37,5 +37,17 @@ git = "https://github.com/szymtor/RAM-TM"
 rev = "134e398cef46599371df99f10c9007bc34ba3868"
 subDir = "proofs"
 
+[[require]]
+name = "Lax253009"
+git = "https://github.com/EdouardBonnet/lax-253009"
+rev = "36990a6252e73a45c2dfc55024d9b457fc1ca934"
+subDir = "concepts"
+
+[[require]]
+name = "Lax253009Proofs"
+git = "https://github.com/EdouardBonnet/lax-253009"
+rev = "36990a6252e73a45c2dfc55024d9b457fc1ca934"
+subDir = "proofs"
+
 [[lean_lib]]
 name = "Lax47Proofs"
