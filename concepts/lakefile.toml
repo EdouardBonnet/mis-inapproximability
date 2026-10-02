@@ -1,5 +1,5 @@
-name = "Lax47"
-defaultTargets = ["Lax47"]
+name = "Lax614640"
+defaultTargets = ["Lax614640"]
 
 [leanOptions]
 autoImplicit = false
@@ -28,4 +28,4 @@ rev = "31864d7e719d388b3d682a807fa2e56c8f9e0ae6"
 subDir = "concepts"
 
 [[lean_lib]]
-name = "Lax47"
+name = "Lax614640"

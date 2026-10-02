@@ -1,5 +1,6 @@
 specVersion: "1"
-id: lax-47
+id: lax-614640
+supersedes: lax-47
 leanVersion: "v4.33.0"
 mathlibVersion: "db584cd6d46c92f209a44c0f1c829460d327499d"
 title: Tight Inapproximability of Max Independent Set in Triangle-Free Graphs
@@ -26,4 +27,4 @@ bibEntries:
     }
 issue:
   repositoryId: 1320232165
-  number: 47
+  number: 158

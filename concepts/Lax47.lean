@@ -1,5 +1,0 @@
-import Lax47.Machine
-import Lax47.Complexity
-import Lax47.Gap
-import Lax47.IndependentSetGapHardness
-import Lax47.TriangleFreeIndependentSetHardness
